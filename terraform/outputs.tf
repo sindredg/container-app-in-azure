@@ -12,3 +12,18 @@ output "container_app_environment_default_domain" {
   description = "Default domain assigned to the Container Apps environment."
   value       = azurerm_container_app_environment.main.default_domain
 }
+
+output "container_registry_name" {
+  description = "Name of the Azure Container Registry."
+  value       = azurerm_container_registry.main.name
+}
+
+output "container_registry_login_server" {
+  description = "Login server used in container image addresses."
+  value       = azurerm_container_registry.main.login_server
+}
+
+output "container_pull_identity_id" {
+  description = "Resource ID of the managed identity used for image pulls."
+  value       = azurerm_user_assigned_identity.container_pull.id
+}
