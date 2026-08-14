@@ -1,6 +1,8 @@
-# Cloud Operations Lab on Azure Container Apps
+# Cloud Operations Lab | Azure Container Apps & Terraform
 
-A hands-on Azure container platform built with Terraform for testing deployments, revisions, health checks, scaling, managed identity, and observability.
+An ongoing cloud engineering project for building, deploying, and validating container workloads on Azure.
+
+The project covers infrastructure as code, private image delivery, managed identity, health probes, revisions, scaling, and observability through a documented Git, Terraform, testing, and troubleshooting workflow.
 
 ## Live site
 
