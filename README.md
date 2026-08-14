@@ -1,12 +1,12 @@
-# Container Scale Lab
+# Azure Container App
 
 A small container platform built on Azure Container Apps with Terraform.
 
-The project follows a realistic engineering workflow using issues, feature branches, reviewed Terraform plans, pull requests, and infrastructure verification.
+The project follows a realistic engineering workflow using issues, feature branches, Terraform plans, pull requests, and infrastructure verification.
 
 ## Current status
 
-The Azure platform foundation is deployed.
+The Azure platform foundation is deployed. The first web container has been built and tested locally.
 
 | Component | Status |
 |---|---|
@@ -15,9 +15,10 @@ The Azure platform foundation is deployed.
 | Container Apps environment | Deployed |
 | Azure Container Registry | Deployed |
 | Managed pull identity | Deployed |
+| Web container | Built and tested locally |
 | Public web Container App | Next |
 | Internal API Container App | Planned |
-| Microsoft Sentinel Integration | Potentially |
+| Microsoft Sentinel integration | Potential |
 
 ## Target architecture
 
@@ -39,7 +40,7 @@ Both apps
    `-> Log Analytics
 ```
 
-The web app will expose an HTTPS endpoint. The API will use internal ingress and will not be directly accessible from the internet.
+The web app will expose a public HTTPS endpoint. The API will use internal ingress and will not be directly accessible from the internet.
 
 ## Technology
 
@@ -56,6 +57,12 @@ The web app will expose an HTTPS endpoint. The API will use internal ingress and
 
 ```text
 container-app-in-azure/
+|-- app/
+|   `-- web/
+|       |-- Dockerfile
+|       |-- nginx.conf
+|       |-- index.html
+|       `-- styles.css
 |-- terraform/
 |   |-- identity.tf
 |   |-- main.tf
@@ -67,7 +74,7 @@ container-app-in-azure/
 `-- README.md
 ```
 
-Saved Terraform plans are stored locally under `terraform/plans/`. Plan files and Terraform state are not committed to Git.
+Terraform state is stored remotely in Azure Storage. Saved Terraform plans are stored locally under `terraform/plans/`. State and plan files are not committed to Git.
 
 ## Deployed infrastructure
 
@@ -82,27 +89,14 @@ azurerm_user_assigned_identity.container_pull
 azurerm_role_assignment.container_pull
 ```
 
-The registry uses ABAC repository permissions. Administrator credentials are disabled. The runtime identity has read-only repository access.
+The registry uses ABAC repository permissions. Administrator credentials are disabled. The managed identity has read-only access to container images.
 
-## Terraform workflow
+## Web container
 
-From the `terraform/` directory:
+The first container serves a static web page using Nginx on port `8080`.
 
-```bash
-terraform fmt
-terraform validate
-terraform plan -out=plans/change.tfplan
-terraform apply plans/change.tfplan
-terraform plan
-```
-
-A final plan should report:
-
-```text
-No changes. Your infrastructure matches the configuration.
-```
+It includes a `/health` endpoint and a Docker health check. The container has been built, started, and verified locally.
 
 ## Next milestone
 
-Build and test the first web container locally, push a versioned image to Azure Container Registry, and deploy it as a public Azure Container App.
-
+Build the web image for `linux/amd64`, push a versioned image to Azure Container Registry, and deploy it as a public Azure Container App.
