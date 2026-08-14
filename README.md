@@ -1,12 +1,16 @@
-# Azure Container App
+# Cloud Operations Lab on Azure Container Apps
 
-A small container platform built on Azure Container Apps with Terraform.
+A hands-on Azure container platform built with Terraform for testing deployments, revisions, health checks, scaling, managed identity, and observability.
 
-The project follows a realistic engineering workflow using issues, feature branches, Terraform plans, pull requests, and infrastructure verification.
+## Live site
+
+[Open the Cloud Operations Lab](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/)
+
+[Health endpoint](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/health)
+
+> **Availability note:** This is a personal lab environment. The site may be temporarily unavailable during deployments, maintenance, or Azure cost-control cleanup. After inactivity, the first request may take a few seconds while the application scales from zero.
 
 ## Current status
-
-The Azure platform foundation is deployed. The first web container has been built and tested locally.
 
 | Component | Status |
 |---|---|
@@ -15,43 +19,58 @@ The Azure platform foundation is deployed. The first web container has been buil
 | Container Apps environment | Deployed |
 | Azure Container Registry | Deployed |
 | Managed pull identity | Deployed |
-| Web container | Built and tested locally |
-| Public web Container App | Next |
+| Public web Container App | Deployed |
 | Internal API Container App | Planned |
-| Microsoft Sentinel integration | Potential |
 
-## Target architecture
+## Architecture
 
 ```text
 Internet
    |
+   | HTTPS
    v
 Public web Container App
    |
    | internal service discovery
    v
 Internal API Container App
+   Planned
 
-Both apps
+Private Azure Container Registry
    |
-   +-> Azure Container Registry
-   |      via managed identity
-   |
-   `-> Log Analytics
+   | managed identity
+   v
+Azure Container Apps
 ```
 
-The web app will expose a public HTTPS endpoint. The API will use internal ingress and will not be directly accessible from the internet.
+The web application uses external ingress. The future API will use internal ingress and will not be directly accessible from the internet.
+
+## Implementation
+
+The deployed web application uses:
+
+- Nginx on port `8080`
+- `/health` for health checks
+- Startup, readiness, and liveness probes
+- Immutable image tag `0.1.1`
+- `linux/amd64` container image
+- Managed identity for private ACR pulls
+- Single revision mode
+- Zero-to-one replica scaling
+- Azure-managed HTTPS ingress
+
+Terraform state is stored remotely in protected Azure Blob Storage.
 
 ## Technology
 
 - Terraform
 - Azure Container Apps
 - Azure Container Registry
-- Managed identities
-- Azure RBAC and ABAC
+- Managed identity
 - Log Analytics
 - Docker
 - Nginx
+- HTML and CSS
 
 ## Repository structure
 
@@ -59,44 +78,58 @@ The web app will expose a public HTTPS endpoint. The API will use internal ingre
 container-app-in-azure/
 |-- app/
 |   `-- web/
+|       |-- .dockerignore
 |       |-- Dockerfile
-|       |-- nginx.conf
 |       |-- index.html
+|       |-- nginx.conf
 |       `-- styles.css
+|-- docs/
+|   |-- phases/
+|   |-- images/
+|   |-- decisions.md
+|   |-- troubleshooting.md
+|   `-- README.md
 |-- terraform/
+|   |-- bootstrap/
 |   |-- identity.tf
 |   |-- main.tf
 |   |-- outputs.tf
 |   |-- providers.tf
 |   |-- registry.tf
 |   |-- variables.tf
-|   `-- versions.tf
+|   |-- versions.tf
+|   `-- web-container-app.tf
+|-- .gitignore
 `-- README.md
 ```
 
-Terraform state is stored remotely in Azure Storage. Saved Terraform plans are stored locally under `terraform/plans/`. State and plan files are not committed to Git.
+Saved Terraform plans, local Terraform data, and state files are not committed.
 
-## Deployed infrastructure
+## Documentation
 
-Terraform currently manages:
+Detailed project evidence is available under [`docs/`](docs/README.md).
 
-```text
-azurerm_resource_group.main
-azurerm_log_analytics_workspace.main
-azurerm_container_app_environment.main
-azurerm_container_registry.main
-azurerm_user_assigned_identity.container_pull
-azurerm_role_assignment.container_pull
-```
+The documentation includes:
 
-The registry uses ABAC repository permissions. Administrator credentials are disabled. The managed identity has read-only access to container images.
+- Phase summaries
+- Architecture and implementation decisions
+- Validation evidence
+- Troubleshooting records
+- Selected screenshots
 
-## Web container
+## Validation
 
-The first container serves a static web page using Nginx on port `8080`.
+The deployment has been verified through:
 
-It includes a `/health` endpoint and a Docker health check. The container has been built, started, and verified locally.
+- Terraform formatting and validation
+- Reviewed Terraform plans
+- Final no-change Terraform plan
+- ACR image manifest inspection
+- Public website HTTP checks
+- Public health endpoint checks
+- Container Apps revision health
+- Managed-identity image pulls
 
 ## Next milestone
 
-Build the web image for `linux/amd64`, push a versioned image to Azure Container Registry, and deploy it as a public Azure Container App.
+Build and deploy an internal API as a separate Container App with independent scaling and internal ingress.
