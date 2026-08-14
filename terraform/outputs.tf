@@ -27,3 +27,13 @@ output "container_pull_identity_id" {
   description = "Resource ID of the managed identity used for image pulls."
   value       = azurerm_user_assigned_identity.container_pull.id
 }
+
+output "web_container_app_name" {
+  description = "Name of the public web Container App."
+  value       = azurerm_container_app.web.name
+}
+
+output "web_container_app_url" {
+  description = "Public HTTPS URL of the web Container App."
+  value       = "https://${azurerm_container_app.web.ingress[0].fqdn}"
+}

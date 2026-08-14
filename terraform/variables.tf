@@ -20,3 +20,9 @@ variable "container_registry_name" {
     error_message = "The registry name must contain 5 to 50 lowercase letters or numbers."
   }
 }
+
+variable "web_image_tag" {
+  description = "Immutable version tag of the web image stored in ACR."
+  type        = string
+  default     = "0.1.1"
+}
