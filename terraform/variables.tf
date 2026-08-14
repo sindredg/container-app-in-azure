@@ -24,5 +24,5 @@ variable "container_registry_name" {
 variable "web_image_tag" {
   description = "Immutable version tag of the web image stored in ACR."
   type        = string
-  default     = "0.1.0"
+  default     = "0.1.1"
 }
