@@ -37,6 +37,7 @@ The public web app is deployed. The internal API is the next milestone.
 
 - [Decision log](decisions.md)
 - [Troubleshooting log](troubleshooting.md)
+- [Validation and testing](validation-testing/README.md)
 
 ## Current stack
 
@@ -48,8 +49,3 @@ The public web app is deployed. The internal API is the next milestone.
 - Docker
 - Nginx
 
-## Documentation rule
-
-Each phase records the goal, completed work, validation, and evidence.
-
-Sensitive state, credentials, tokens, and saved Terraform plans are not included.
