@@ -1,16 +1,14 @@
-# Cloud Operations Lab | Azure Container Apps & Terraform
+# Azure Container Platform
 
-An ongoing cloud engineering project for building, deploying, and validating container workloads on Azure.
+An ongoing cloud engineering project for building, deploying, securing, operating, and validating container workloads on Azure.
 
-The project covers infrastructure as code, private image delivery, managed identity, health probes, revisions, scaling, and observability through a documented Git, Terraform, testing, and troubleshooting workflow.
+The platform is built with Terraform and follows a documented workflow covering infrastructure changes, container releases, managed identity, health checks, revisions, observability, testing, and troubleshooting.
 
-## Live site
+## Live environment
 
-[Open the Cloud Operations Lab](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/)
+[Open Sindre's Cloud Operations Lab](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/)
 
-[Health endpoint](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/health)
-
-> **Availability note:** This is a personal lab environment. The site may be temporarily unavailable during deployments, maintenance, or Azure cost-control cleanup. After inactivity, the first request may take a few seconds while the application scales from zero.
+> This is a development environment. The application may be unavailable during updates, testing, scale-to-zero periods, or cost-control shutdowns.
 
 ## Current status
 
@@ -22,46 +20,32 @@ The project covers infrastructure as code, private image delivery, managed ident
 | Azure Container Registry | Deployed |
 | Managed pull identity | Deployed |
 | Public web Container App | Deployed |
+| Operational validation | In progress |
 | Internal API Container App | Planned |
+| Scaling and alerting tests | Next |
+| Microsoft Sentinel integration | Potential |
 
 ## Architecture
 
 ```text
 Internet
    |
-   | HTTPS
    v
 Public web Container App
    |
    | internal service discovery
    v
 Internal API Container App
-   Planned
 
-Private Azure Container Registry
+Both applications
    |
-   | managed identity
-   v
-Azure Container Apps
+   +-> Private Azure Container Registry
+   |      through managed identity
+   |
+   `-> Log Analytics
 ```
 
-The web application uses external ingress. The future API will use internal ingress and will not be directly accessible from the internet.
-
-## Implementation
-
-The deployed web application uses:
-
-- Nginx on port `8080`
-- `/health` for health checks
-- Startup, readiness, and liveness probes
-- Immutable image tag `0.1.1`
-- `linux/amd64` container image
-- Managed identity for private ACR pulls
-- Single revision mode
-- Zero-to-one replica scaling
-- Azure-managed HTTPS ingress
-
-Terraform state is stored remotely in protected Azure Blob Storage.
+The public web application uses Azure-managed HTTPS ingress. The planned API will use internal ingress and will not be directly accessible from the internet.
 
 ## Technology
 
@@ -69,10 +53,38 @@ Terraform state is stored remotely in protected Azure Blob Storage.
 - Azure Container Apps
 - Azure Container Registry
 - Managed identity
+- Azure RBAC and ABAC
 - Log Analytics
 - Docker
 - Nginx
-- HTML and CSS
+
+## Current deployment
+
+The public application runs as an Nginx container using:
+
+- Immutable image tag `web:0.1.1`
+- Linux AMD64 image
+- Private ACR delivery
+- Password-free managed identity pulls
+- Startup, readiness, and liveness probes
+- Scale range from zero to one replica
+- Azure-managed HTTPS
+- Remote Terraform state with locking and recovery controls
+
+## Validation
+
+The deployed application has been validated through:
+
+- Public HTTPS and health requests
+- Container revision health
+- Scale from zero to one replica
+- Private image retrieval
+- Application and platform logs
+- Log Analytics request correlation
+- Negative-path testing
+- Terraform drift checks
+
+Validation evidence, implementation phases, decisions, and troubleshooting records are available under [`docs/`](docs/README.md).
 
 ## Repository structure
 
@@ -80,58 +92,16 @@ Terraform state is stored remotely in protected Azure Blob Storage.
 container-app-in-azure/
 |-- app/
 |   `-- web/
-|       |-- .dockerignore
-|       |-- Dockerfile
-|       |-- index.html
-|       |-- nginx.conf
-|       `-- styles.css
 |-- docs/
-|   |-- phases/
 |   |-- images/
-|   |-- decisions.md
-|   |-- troubleshooting.md
-|   `-- README.md
+|   |-- phases/
+|   `-- validation-testing/
 |-- terraform/
-|   |-- bootstrap/
-|   |-- identity.tf
-|   |-- main.tf
-|   |-- outputs.tf
-|   |-- providers.tf
-|   |-- registry.tf
-|   |-- variables.tf
-|   |-- versions.tf
-|   `-- web-container-app.tf
-|-- .gitignore
 `-- README.md
 ```
 
-Saved Terraform plans, local Terraform data, and state files are not committed.
-
-## Documentation
-
-Detailed project evidence is available under [`docs/`](docs/README.md).
-
-The documentation includes:
-
-- Phase summaries
-- Architecture and implementation decisions
-- Validation evidence
-- Troubleshooting records
-- Selected screenshots
-
-## Validation
-
-The deployment has been verified through:
-
-- Terraform formatting and validation
-- Reviewed Terraform plans
-- Final no-change Terraform plan
-- ACR image manifest inspection
-- Public website HTTP checks
-- Public health endpoint checks
-- Container Apps revision health
-- Managed-identity image pulls
+Terraform state and saved plan files are not committed to Git.
 
 ## Next milestone
 
-Build and deploy an internal API as a separate Container App with independent scaling and internal ingress.
+Correct or explicitly accept the missing-route response behavior, validate Azure Monitor metrics and horizontal scaling, then deploy an internal API Container App.
