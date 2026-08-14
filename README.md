@@ -4,12 +4,6 @@ An ongoing cloud engineering project for building, deploying, securing, operatin
 
 The platform is built with Terraform and follows a documented workflow covering infrastructure changes, container releases, managed identity, health checks, revisions, observability, testing, and troubleshooting.
 
-## Live environment
-
-[Open Sindre's Cloud Operations Lab](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io/)
-
-> This is a development environment. The application may be unavailable during updates, testing, scale-to-zero periods, or cost-control shutdowns.
-
 ## Current status
 
 | Component | Status |
