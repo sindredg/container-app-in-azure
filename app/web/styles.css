@@ -118,6 +118,14 @@ h1 {
   color: #67e8f9;
 }
 
+.footer {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  padding: 0 0 48px;
+  color: #6b7f96;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 760px) {
   .page {
     padding: 48px 0;
