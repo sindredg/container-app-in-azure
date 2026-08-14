@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Container Scale Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Azure Container Apps</p>
+
+      <h1>Container Scale Lab</h1>
+
+      <p class="summary">
+        A small engineering project for learning container builds,
+        infrastructure as code, private registries, managed identity,
+        health checks, and automatic scaling.
+      </p>
+
+      <div class="status">
+        <span class="status-indicator"></span>
+        Web container is running
+      </div>
+    </section>
+
+    <section class="cards">
+      <article class="card">
+        <h2>Web</h2>
+        <p>Static HTML and CSS served by Nginx.</p>
+        <span>Public ingress</span>
+      </article>
+
+      <article class="card">
+        <h2>API</h2>
+        <p>A separate internal service will be added later.</p>
+        <span>Internal ingress</span>
+      </article>
+
+      <article class="card">
+        <h2>Platform</h2>
+        <p>Azure infrastructure managed with Terraform.</p>
+        <span>Container Apps</span>
+      </article>
+    </section>
+
+    <section class="architecture">
+      <h2>Request path</h2>
+
+      <div class="flow">
+        <span>Browser</span>
+        <strong>→</strong>
+        <span>Azure ingress</span>
+        <strong>→</strong>
+        <span>Nginx container</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
