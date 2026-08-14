@@ -1,0 +1,83 @@
+resource "azurerm_container_app" "web" {
+  name                         = "ca-${local.project_name}-web-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+
+  identity {
+    type = "UserAssigned"
+
+    identity_ids = [
+      azurerm_user_assigned_identity.container_pull.id
+    ]
+  }
+
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_pull.id
+  }
+
+  ingress {
+    external_enabled           = true
+    allow_insecure_connections = false
+    target_port                = 8080
+    transport                  = "auto"
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    http_scale_rule {
+      name                = "http-requests"
+      concurrent_requests = 10
+    }
+
+    container {
+      name   = "web"
+      image  = "${azurerm_container_registry.main.login_server}/web:${var.web_image_tag}"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      startup_probe {
+        transport               = "HTTP"
+        port                    = 8080
+        path                    = "/health"
+        interval_seconds        = 5
+        timeout                 = 2
+        failure_count_threshold = 12
+      }
+
+      readiness_probe {
+        transport               = "HTTP"
+        port                    = 8080
+        path                    = "/health"
+        interval_seconds        = 5
+        timeout                 = 2
+        failure_count_threshold = 3
+        success_count_threshold = 1
+      }
+
+      liveness_probe {
+        transport               = "HTTP"
+        port                    = 8080
+        path                    = "/health"
+        initial_delay           = 10
+        interval_seconds        = 10
+        timeout                 = 2
+        failure_count_threshold = 3
+      }
+    }
+  }
+
+  depends_on = [
+    azurerm_role_assignment.container_pull
+  ]
+
+  tags = local.common_tags
+}
