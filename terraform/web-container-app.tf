@@ -44,6 +44,11 @@ resource "azurerm_container_app" "web" {
       cpu    = 0.25
       memory = "0.5Gi"
 
+      env {
+        name  = "API_UPSTREAM"
+        value = "https://${azurerm_container_app.api.ingress[0].fqdn}"
+      }
+
       startup_probe {
         transport               = "HTTP"
         port                    = 8080
@@ -79,5 +84,5 @@ resource "azurerm_container_app" "web" {
     azurerm_role_assignment.container_pull
   ]
 
-  tags = local.common_tags
+  tags = merge(local.common_tags, { component = "web" })
 }
