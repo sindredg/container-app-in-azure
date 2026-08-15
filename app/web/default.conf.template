@@ -1,0 +1,59 @@
+map $http_x_forwarded_for $client_net {
+    "~^(?P<net>\d+\.\d+\.\d+)\."  "$net.0";
+    default                        "unknown";
+}
+
+log_format privacy '$client_net - [$time_local] "$request" '
+                   '$status $body_bytes_sent "$http_user_agent"';
+
+server {
+    listen 8080;
+    server_name _;
+
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    access_log /var/log/nginx/access.log privacy;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Content-Security-Policy "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" always;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "healthy\n";
+    }
+
+    # -the internal API, published on this origin so the browser never
+    # -learns the API hostname and never leaves the site's own CSP
+    location /api/ {
+        proxy_pass ${API_UPSTREAM}/;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header Connection "";
+
+        # empty value removes the header, so the API never sees a client address;
+        # it gets the /24 network phase 8 already truncated instead
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header X-Client-Network $client_net;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # needed once this points at an https:// upstream in Azure
+        proxy_ssl_server_name on;
+        proxy_ssl_verify off;
+
+        # the API scales to zero, so the first request pays a cold start
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+}

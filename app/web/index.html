@@ -34,7 +34,22 @@
 
       <article class="card">
         <h2>API</h2>
-        <p>A separate internal service will be added later.</p>
+        <p>Internal FastAPI service, read through the web container.</p>
+
+        <dl class="api-status">
+          <dt>State</dt>
+          <dd id="api-state">checking</dd>
+
+          <dt>Version</dt>
+          <dd id="api-version">—</dd>
+
+          <dt>Revision</dt>
+          <dd id="api-revision">—</dd>
+
+          <dt>Replica</dt>
+          <dd id="api-replica">—</dd>
+        </dl>
+
         <span>Internal ingress</span>
       </article>
 
@@ -54,6 +69,8 @@
         <span>Azure ingress</span>
         <strong>→</strong>
         <span>Nginx container</span>
+        <strong>→</strong>
+        <span>Internal API</span>
       </div>
     </section>
   </main>
@@ -61,5 +78,7 @@
   <footer class="footer">
     <p>Development lab. Request logs are truncated to network level and retained for 30 days.</p>
   </footer>
+
+  <script src="/app.js" defer></script>
 </body>
 </html>
