@@ -1,8 +1,10 @@
-resource "azurerm_container_app" "web" {
-  name                         = "ca-${local.project_name}-web-${var.environment}"
+resource "azurerm_container_app" "api" {
+  name                         = "ca-${local.project_name}-api-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.main.name
   revision_mode                = "Single"
+
+  max_inactive_revisions = 5
 
   identity {
     type = "UserAssigned"
@@ -17,8 +19,10 @@ resource "azurerm_container_app" "web" {
     identity = azurerm_user_assigned_identity.container_pull.id
   }
 
+  # Internal ingress. The FQDN carries an .internal. segment and resolves only
+  # inside the environment, so the web container is the only route to this app.
   ingress {
-    external_enabled           = true
+    external_enabled           = false
     allow_insecure_connections = false
     target_port                = 8080
     transport                  = "auto"
@@ -39,14 +43,15 @@ resource "azurerm_container_app" "web" {
     }
 
     container {
-      name   = "web"
-      image  = "${azurerm_container_registry.main.login_server}/web:${var.web_image_tag}"
+      name   = "api"
+      image  = "${azurerm_container_registry.main.login_server}/api:${var.api_image_tag}"
       cpu    = 0.25
       memory = "0.5Gi"
 
+      # Reported by /status, so the running version cannot drift from the tag.
       env {
-        name  = "API_UPSTREAM"
-        value = "https://${azurerm_container_app.api.ingress[0].fqdn}"
+        name  = "SERVICE_VERSION"
+        value = var.api_image_tag
       }
 
       startup_probe {
@@ -84,5 +89,5 @@ resource "azurerm_container_app" "web" {
     azurerm_role_assignment.container_pull
   ]
 
-  tags = merge(local.common_tags, { component = "web" })
+  tags = merge(local.common_tags, { component = "api" })
 }

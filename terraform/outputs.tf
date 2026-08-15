@@ -37,3 +37,13 @@ output "web_container_app_url" {
   description = "Public HTTPS URL of the web Container App."
   value       = "https://${azurerm_container_app.web.ingress[0].fqdn}"
 }
+
+output "api_container_app_name" {
+  description = "Name of the internal API Container App."
+  value       = azurerm_container_app.api.name
+}
+
+output "api_container_app_internal_fqdn" {
+  description = "Internal FQDN of the API Container App. Resolvable only inside the Container Apps environment."
+  value       = azurerm_container_app.api.ingress[0].fqdn
+}
