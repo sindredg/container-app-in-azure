@@ -101,6 +101,34 @@ h1 {
   font-size: 0.9rem;
 }
 
+.api-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 18px;
+  font-size: 0.85rem;
+}
+
+.api-status dt {
+  color: #6b7f96;
+}
+
+.api-status dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Replica names are long and unbroken, so they must be allowed to wrap. */
+  overflow-wrap: anywhere;
+}
+
+.api-status dd[data-state="up"] {
+  color: #4ade80;
+}
+
+.api-status dd[data-state="down"] {
+  color: #f87171;
+}
+
 .architecture {
   margin-top: 20px;
   padding: 24px;
