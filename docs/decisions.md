@@ -18,5 +18,12 @@ This log records the main architecture and delivery decisions.
 | Use single revision mode first | Accepted | Sends traffic to one active release while revision behavior is learned. |
 | Store Terraform state in Azure Blob Storage | Accepted | Enables remote state, locking, versioning, and recovery controls. |
 | Add GitHub Actions after the manual workflow | Deferred | Manual execution builds understanding before automation. |
+| Use FastAPI for the internal API | Accepted | Small image, JSON by default, and a published schema for the service contract. |
+| Reach the API through the web container's origin | Accepted | The browser never learns the internal hostname, no cross-origin request is made, and the call stays inside the existing Content Security Policy. |
+| Remove the client address at the proxy | Accepted | The API is told the truncated network instead, which correlates a request across both tiers without carrying an address. |
+| Disable the interactive API documentation | Accepted | Its assets load from a public CDN, so serving it would mean weakening the Content Security Policy. |
+| Inject the API address at container start | Accepted | Keeps one immutable image usable in every environment instead of one build per address. |
+| Run the API container as a non-root user | Accepted | Matches the unprivileged user the Nginx base image already provides for the web container. |
+| Log the request rather than the caller in the API | Accepted | Extends the phase 8 privacy stance to the second tier, where no address is needed at all. |
 
-Future decisions will cover the API runtime, service contract, and automated delivery identity.
+Future decisions will cover automated delivery identity and per-app pull identities.

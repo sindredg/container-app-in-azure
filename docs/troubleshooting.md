@@ -47,3 +47,35 @@
 **Cause:** A filename used `.tfoplan` instead of the ignored `.tfplan` extension.
 
 **Fix:** Inspect the exact untracked path and remove the disposable misspelled plan.
+
+## Compose could not bind port 8080
+
+**Symptom:** The web container failed to start with `Bind for 0.0.0.0:8080 failed: port is already allocated`.
+
+**Cause:** A container from an earlier single-image test was still running and holding the published port.
+
+**Fix:** Identify the holder with `docker ps --filter publish=8080` and remove it before starting the composition.
+
+## Header check returned 405 against the API
+
+**Symptom:** `curl -I` against `/api/status` returned `405 Method Not Allowed`.
+
+**Cause:** FastAPI registers only `GET` for a `@app.get` route and does not add `HEAD` automatically, unlike plain Starlette.
+
+**Fix:** Inspect headers with a `GET` that discards the body, using `curl -sD - -o /dev/null`. Add `HEAD` to the route only where a monitor needs it.
+
+## Web image build failed on a deleted file
+
+**Symptom:** The build stopped with `"/app.js": not found`.
+
+**Cause:** The file was removed while the Dockerfile still copied it, because an instruction block was pasted into the shell and the editing step was a comment line rather than a command.
+
+**Fix:** Restore the file or drop it from the `COPY` instruction. Treat pasted blocks containing comments as unreliable, and confirm the file list before building.
+
+## Git refused to rename the Nginx config
+
+**Symptom:** `git mv` reported a bad source path for `nginx.conf`.
+
+**Cause:** The command ran from the repository root while the path was relative to `app/web`.
+
+**Fix:** Run the rename from the directory holding the file, or give the full path from the repository root.

@@ -19,7 +19,7 @@ Both apps pull private images from ACR with managed identity.
 Platform and application logs flow to Log Analytics.
 ```
 
-The public web app is deployed. The internal API is the next milestone.
+The public web app is deployed. The internal API is built and verified locally; deploying it is the next milestone.
 
 ## Phase documentation
 
@@ -33,6 +33,7 @@ The public web app is deployed. The internal API is the next milestone.
 | [6. First web container](phases/phase-06-first-web-container.md) | Complete | Nginx image built and verified locally. |
 | [7. Public web Container App](phases/phase-07-public-web-container-app.md) | Complete | Versioned image published and deployed through public HTTPS ingress. |
 | [8. Routing, hardening, and log privacy](phases/phase-08-web-routing-and-log-privacy.md) | Complete | Real `404` responses, protective headers, and network-level request logging. |
+| [9. Internal API container](phases/phase-09-internal-api-container.md) | Complete | FastAPI service and same-origin web proxy built and verified locally. |
 
 ## Worklog
 
@@ -64,3 +65,4 @@ The phase pages above are summaries. The worklog records how each phase actually
 - Log Analytics
 - Docker
 - Nginx
+- Python and FastAPI

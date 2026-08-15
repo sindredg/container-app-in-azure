@@ -24,6 +24,7 @@ The app scales to zero when idle, so the first request may take a moment while a
 | Routing and response hardening | Deployed |
 | Network-level request logging | Deployed |
 | Operational validation | In progress |
+| Internal API container | Built and verified locally |
 | Internal API Container App | Next |
 | Per-app identities with repository conditions | Planned |
 | VNet-integrated environment | Planned |
@@ -80,6 +81,7 @@ flowchart TB
 - Log Analytics
 - Docker
 - Nginx
+- Python and FastAPI
 
 ## Current deployment
 
@@ -120,6 +122,7 @@ Validation evidence, implementation phases, decisions, and troubleshooting recor
 ```text
 container-app-in-azure/
 |-- app/
+|   |-- api/
 |   `-- web/
 |-- docs/
 |   |-- images/
@@ -127,11 +130,16 @@ container-app-in-azure/
 |   |-- validation-testing/
 |   `-- worklog/
 |-- terraform/
+|-- compose.yaml
 `-- README.md
 ```
 
 Terraform state and saved plan files are not committed to Git.
 
+## Local composition
+
+Both containers run together with `docker compose up --build`. The API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress it will use in Azure.
+
 ## Next milestone
 
-Re-run the recon path checks against the hardened deployment, validate Azure Monitor metrics and horizontal scaling, then deploy an internal API Container App.
+Deploy the API as an internal Container App, wire the web container to its internal address, then re-run the recon path checks and validate Azure Monitor metrics and horizontal scaling.
