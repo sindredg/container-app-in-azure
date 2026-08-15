@@ -69,7 +69,7 @@ flowchart TB
     TF -->|"manages infrastructure"| ACR
     TF -->|"remote state and locking"| ST
     GHA -->|"plan and apply"| TF
-
+```
 ## Technology
 
 - Terraform
