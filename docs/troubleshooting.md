@@ -47,3 +47,23 @@
 **Cause:** A filename used `.tfoplan` instead of the ignored `.tfplan` extension.
 
 **Fix:** Inspect the exact untracked path and remove the disposable misspelled plan.
+
+## Header check against the API returned 405
+
+**Symptom:** `curl -I` against an API route returned `405 Method Not Allowed` with `allow: GET`.
+
+**Cause:** `curl -I` sends `HEAD`. FastAPI's `@app.get` registers `GET` only, unlike plain Starlette, which answers `HEAD` for a `GET` route.
+
+**Fix:** Use a `GET` that discards the body: `curl -sD - -o /dev/null <url>`.
+
+![HEAD rejected with 405 and allow: GET](images/phase-09-head-405-method-not-allowed.png)
+
+## Proxied API path returned 404 instead of reaching the API
+
+**Symptom:** `/api/status` returned `404` from nginx on the public site, while the API itself was healthy.
+
+**Cause:** The `API_UPSTREAM` environment variable applied, but the image tag was never moved, so the running web image predated the `/api/` proxy block.
+
+**Fix:** Move `web_image_tag` to the image that contains the proxy configuration and apply.
+
+![Nginx returns its own 404 because no location matched](images/phase-10-api-status-404-stale-web.png)
