@@ -32,6 +32,22 @@ The public web app is deployed. The internal API is the next milestone.
 | [5. Remote Terraform state](phases/phase-05-remote-terraform-state.md) | Complete | Terraform state migrated to protected Azure Blob Storage. |
 | [6. First web container](phases/phase-06-first-web-container.md) | Complete | Nginx image built and verified locally. |
 | [7. Public web Container App](phases/phase-07-public-web-container-app.md) | Complete | Versioned image published and deployed through public HTTPS ingress. |
+| [8. Routing, hardening, and log privacy](phases/phase-08-web-routing-and-log-privacy.md) | Complete | Real `404` responses, protective headers, and network-level request logging. |
+
+## Worklog
+
+The phase pages above are summaries. The worklog records how each phase actually went, step by step, with the screenshot evidence behind every claim.
+
+| Phase | Worklog |
+|---|---|
+| 1 | [Repository and Terraform bootstrap](worklog/phase-01-repository-and-terraform-bootstrap.md) |
+| 2 | [First Azure resource](worklog/phase-02-first-azure-resource.md) |
+| 3 | [Container Apps environment](worklog/phase-03-container-apps-environment.md) |
+| 4 | [Registry and pull identity](worklog/phase-04-registry-and-pull-identity.md) |
+| 5 | [Remote Terraform state](worklog/phase-05-remote-terraform-state.md) |
+| 6 | [First web container](worklog/phase-06-first-web-container.md) |
+| 7 | [Public web Container App](worklog/phase-07-public-web-container-app.md) |
+| 8 | [Routing, hardening, and log privacy](worklog/phase-08-web-routing-and-log-privacy.md) |
 
 ## Supporting logs
 
@@ -48,4 +64,3 @@ The public web app is deployed. The internal API is the next milestone.
 - Log Analytics
 - Docker
 - Nginx
-
