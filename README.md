@@ -1,8 +1,8 @@
 # Azure Container Platform
 
-A cloud engineering project for building, deploying, securing, operating, and validating container workloads on Azure.
+Two containerised services on Azure Container Apps — a public web tier and an internal API — built and operated entirely with Terraform.
 
-Everything managed with Terraform and built in documented phases. Each architectural choice is recorded with the alternative that was rejected, each phase has a worklog with the evidence behind claims, and unresolved gaps are tracked as open items rather than left out.
+Built in phases, each with a [worklog](docs/worklog/) and a record of the [decisions](docs/decisions.md) behind it.
 
 ## Live Container App
 
@@ -27,9 +27,11 @@ Both services scale to zero when idle, so the first request after a quiet period
 | Same-origin proxy from web to API | Deployed |
 | Operational validation | In progress |
 | Per-app identities with repository conditions | Next |
+| Scaling above one replica | Planned |
+| Azure SQL Database with Entra authentication | Planned |
 | Automated delivery with federated credentials | Planned |
 | VNet-integrated environment | Planned |
-| Private endpoints for registry and state | Planned |
+| Private endpoints for registry, state, and database | Planned |
 | Container image scanning | Planned |
 | Microsoft Sentinel detection rules | Planned |
 | Scaling and recovery tests | Planned |
@@ -49,6 +51,7 @@ flowchart TB
         end
     end
 
+    SQL["Azure SQL Database"]
     ACR["Private Azure Container Registry"]
     MI["User-assigned managed identities<br/>repository reader, one per app"]
     LAW["Log Analytics workspace"]
@@ -58,8 +61,10 @@ flowchart TB
     GHA["GitHub Actions<br/>federated credentials"]
 
     U -->|"HTTPS"| WEB
-    WEB -->|"internal service discovery"| API
-    MI -.->|"authenticates the pull"| ACR
+    WEB -->|"server-side proxy over internal ingress"| API
+    API -->|"passwordless connection"| SQL
+    MI -.->|"authenticates the image pull"| ACR
+    MI -.->|"authenticates the database connection"| SQL
     ACR -->|"private image"| WEB
     ACR -->|"private image"| API
     WEB -->|"application logs"| LAW
@@ -68,21 +73,30 @@ flowchart TB
     LAW -->|"analytics rules"| SENT
     TF -->|"manages infrastructure"| CAE
     TF -->|"manages infrastructure"| ACR
+    TF -->|"manages infrastructure"| SQL
     TF -->|"remote state and locking"| ST
     GHA -->|"plan and apply"| TF
 ```
 
-## Technology
+## How it fits together
 
-- Terraform
-- Azure Container Apps
-- Azure Container Registry
-- Managed identity
-- Azure RBAC and ABAC
-- Log Analytics
-- Docker
-- Nginx
-- Python and FastAPI
+**Public web app** — the only thing on the internet. Nginx serves a static site and carries an `/api/` location that proxies to the API from inside the container. Because the proxy happens server-side rather than in the browser, the API's hostname never reaches client code, every request the browser makes is to its own origin, and no CORS configuration exists anywhere in the system.
+
+**Internal API** — a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
+
+**Database** *(planned)* — Azure SQL Database, connected to by the API using its managed identity rather than a password in a connection string. It gives the application something real to hold: which revisions have served traffic, and when the platform last scaled up from zero.
+
+**Container Apps environment** — the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
+
+**Container Registry** — private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
+
+**Managed identity** — how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image. The database will authenticate the same way.
+
+**Log Analytics** — where both applications and the platform itself send logs. Application logs from each tier land alongside platform events like scaling and revision changes, so a single request can be followed across both services. The web tier records the client's `/24` network rather than their address; the API records no address at all.
+
+**Terraform** — every resource above is declared in code, with state in Azure Blob Storage, locked during changes and versioned for recovery. Nothing is created by hand, so the environment can be read from the repository and rebuilt from it. A separate bootstrap root creates the state backend itself, since it cannot store its own first state.
+
+**Docker and Compose** — both images are built locally and verified before they reach Azure. In the local composition the API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress boundary rather than approximating it.
 
 ## Current deployment
 
