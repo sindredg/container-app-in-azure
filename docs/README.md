@@ -36,6 +36,10 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 | 9 | [Internal API container](worklog/phase-09-internal-api-container-local.md) |
 | 10 | [Internal API Container App](worklog/phase-10-internal-api-container-app.md) |
 
+## What comes next
+
+The [roadmap](roadmap.md) covers the remaining phases, why they are in that order, and what each has to decide before it can be called finished.
+
 ## Supporting logs
 
 - [Decision log](decisions.md) — every significant choice, with the alternative that was rejected

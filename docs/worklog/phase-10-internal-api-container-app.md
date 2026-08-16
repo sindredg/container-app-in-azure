@@ -56,9 +56,7 @@ Proves the correction was a single in-place change with nothing added or destroy
 
 Proves the full path works: a public HTTPS request to `/api/status` reaches the internal API, which reports its own revision and replica names. Those values could only come from inside the Container Apps environment.
 
-![A cold start times out, and the retry succeeds](../images/phase-10-cold-start-504-then-200.png)
-
-Proves the first request after several hours idle returned `504`, and an immediate retry returned `200` with the four security headers and a version-free `server` header on a proxied response. Waking a replica from zero exceeded the 30 second `proxy_read_timeout`, so scale to zero has a cost that falls on the first visitor.
+One result was not captured as a screenshot. The first request after several hours idle returned `504`, and an immediate retry returned `200`, carrying the four security headers and a version-free `server` header on a proxied response. Waking a replica from zero exceeded the 30 second `proxy_read_timeout`, so scale to zero has a cost that falls on the first visitor. Tracked as an open item.
 
 ## What this phase established
 
