@@ -1,7 +1,5 @@
 # Decision Log
 
-# Decision Log
-
 The decisions worth explaining. Each one had a reasonable alternative that was not taken.
 
 ## Why Container Apps instead of Kubernetes?
@@ -57,6 +55,12 @@ The browser calls `/api/` on the site it already loaded, and nginx proxies to th
 It returns its own health and identity data, nothing more, and internal ingress already keeps it unreachable from the internet.
 
 **Alternative:** Add a token mechanism now. That means choosing and operating one before there is anything to protect. This stops being defensible the moment the API returns real data or the environment is shared, and it is tracked as an open item rather than a finished position.
+
+## Why is the whole API published through the proxy?
+
+The `/api/` location forwards every path, so `/api/openapi.json` and `/api/health` are publicly readable alongside `/api/status`. The schema describes two endpoints that return nothing being protected, and blocking it would be theatre.
+
+**Alternative:** Restrict the proxy to the paths the browser needs. That is the safer default, because it withholds by design rather than publishing by default, and it becomes the right answer the moment the API gains a route returning anything private. Accepted for now on the basis that nothing behind it is sensitive.
 
 ## Why does the Content Security Policy allow no inline script?
 
