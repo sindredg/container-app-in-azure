@@ -35,7 +35,7 @@ variable "api_image_tag" {
 variable "web_image_tag" {
   description = "Immutable version tag of the web image stored in ACR."
   type        = string
-  default     = "latest"
+  default     = "0.2.0"
 
   validation {
     condition     = can(regex("^\\d+\\.\\d+\\.\\d+$", var.web_image_tag))
