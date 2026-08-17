@@ -50,20 +50,31 @@ The browser calls `/api/` on the site it already loaded, and nginx proxies to th
 
 **Alternative:** Give the API external ingress and call it directly. That needs CORS configuration and publishes a second public entry point, which is the opposite of the intent.
 
-## Why does the API have no authentication?
+## Why does the API need a secret when it has no public address?
 
-It returns its own health and identity data, nothing more, and internal ingress already keeps it unreachable from the internet.
+Internal ingress protects it from the internet. It does not protect it from anything already running inside the environment. The proxy sends a secret that Terraform generates and both apps hold, so the API answers only the caller it is meant to. `/health` stays open because the platform probes call the container directly rather than through the proxy.
 
-**Alternative:** Add a token mechanism now. That means choosing and operating one before there is anything to protect. This stops being defensible the moment the API returns real data or the environment is shared, and it is tracked as an open item rather than a finished position.
+**Alternative:** Keep relying on internal ingress alone, which was the earlier position. It is one control where two cost almost nothing, since nobody ever handles the generated value. Microsoft Entra would be stronger again, at the price of an app registration and token handling this project does not need yet.
 
-## Why is the whole API published through the proxy?
+## Why is the generated API schema switched off?
 
-The `/api/` location forwards every path, so `/api/openapi.json` and `/api/health` are publicly readable alongside `/api/status`. The schema describes two endpoints that return nothing being protected, and blocking it would be theatre.
+Nothing consumes it in Azure, so publishing the route surface bought nothing. It is now behind a flag, off in Azure and on for local work. The interactive docs were already off, because their assets load from a CDN the Content Security Policy blocks.
 
-**Alternative:** Restrict the proxy to the paths the browser needs. That is the safer default, because it withholds by design rather than publishing by default, and it becomes the right answer the moment the API gains a route returning anything private. Accepted for now on the basis that nothing behind it is sensitive.
+**Alternative:** Leave it public, which makes the service self-describing and was the earlier position. Blocking it at the proxy instead would hide the path while leaving the route live on the API itself, which is the weaker of the two fixes.
 
 ## Why does the Content Security Policy allow no inline script?
 
 `default-src 'self'` with no inline exception. Starting strict is easier than tightening later, because the constraint shapes the code that gets written.
 
 **Alternative:** Allow `'unsafe-inline'`, which suits small snippets embedded in the page and permits most of what a CSP is meant to prevent. The cost of the strict version is real: the API panel's JavaScript has to be served as its own file.
+## Why does CI get its permissions from a separate Terraform root?
+
+The pipeline's identity and every role assignment it holds live in the bootstrap configuration, which only a human applies. CI applies the platform configuration and nothing else. It therefore cannot grant itself more access, because its own permissions are outside what it is able to change.
+
+**Alternative:** Keep the identity beside the resources it manages, which is simpler and puts related things together. It also means a change to the pipeline can change what the pipeline is allowed to do, which is the property worth giving up simplicity for.
+
+## Why does the pipeline refuse to deploy when source changed without a version bump?
+
+Image tags are immutable, so the build skips any tag already in the registry. That is correct, but it means changing application code without bumping the tag deploys the old image. The first pipeline run did exactly that and shipped a web image older than the change it was meant to carry. The build now fails and names the variable to bump.
+
+**Alternative:** Tag every build with the commit hash, which removes the failure entirely but also removes readable release numbers. Or rebuild and overwrite the tag, which abandons immutability and makes a deployed version unidentifiable.

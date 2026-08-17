@@ -67,3 +67,23 @@
 **Fix:** Move `web_image_tag` to the image that contains the proxy configuration and apply.
 
 ![Nginx returns its own 404 because no location matched](images/phase-10-api-status-404-stale-web.png)
+
+## GitHub Actions login found no matching federated credential
+
+**Symptom:** `AADSTS700213: No matching federated identity record found for presented assertion subject`.
+
+**Cause:** Two faults. GitHub qualifies the owner and repository in the subject with their numeric IDs, and the credentials used the plain `repo:owner/repo` form. Separately, a job targeting a deployment environment receives an environment claim instead of a ref claim, so the credential written for `ref:refs/heads/main` could never match.
+
+**Fix:** Read the subject out of the error and match it exactly. Replace the ref credential with an environment one.
+
+![No matching federated identity record for the presented subject](images/phase-12-oidc-subject-mismatch.png)
+
+## Pipeline deployed images that did not match the commit
+
+**Symptom:** Login, build, and apply all passed, then the smoke test reported the site at `200` and the API path at `401`.
+
+**Cause:** The build skips any image tag already published, which is correct for immutable tags. Nothing checked whether the source had changed without its tag changing too, so a release shipped a web image that predated the change it was meant to carry.
+
+**Fix:** Fail the build when a service's source changed in the push but its tag is already published, and name the variable to bump.
+
+![The smoke test catches the mismatched image](images/phase-12-smoke-test-catches-stale-image.png)
