@@ -14,27 +14,42 @@ resource "azurerm_user_assigned_identity" "ci" {
   tags                = local.common_tags
 }
 
-# parent_id is correct for AzureRM 4.x. Version 5 renames it to
-# user_assigned_identity_id and drops resource_group_name entirely,
-# so this block changes when the provider constraint moves.
+# user_assigned_identity_id is the current name. The 4.x provider still accepts
+# the old parent_id but warns, and v5 removes it along with resource_group_name.
 #
-# Subject strings must match exactly what GitHub sends. A pull request token
-# always carries subject repo:OWNER/REPO:pull_request regardless of branch,
-# while a push to main carries the ref form.
-resource "azurerm_federated_identity_credential" "pull_request" {
-  name      = "github-pull-request"
-  parent_id = azurerm_user_assigned_identity.ci.id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = "repo:${var.github_owner}/${var.github_repository}:pull_request"
+# The subject has to match byte for byte what GitHub puts in the token.
+# Two things make that less obvious than it looks:
+#
+#   1. GitHub qualifies the owner and repository with their numeric IDs, so
+#      trust cannot be inherited by renaming a repo or reusing a namespace.
+#   2. A job that targets an environment gets an environment claim INSTEAD of
+#      a ref claim, not in addition to it. The deploy job uses the dev
+#      environment for its approval gate, so ref:refs/heads/main never appears.
+locals {
+  github_repo_claim = join("", [
+    "repo:",
+    var.github_owner, "@", var.github_owner_id,
+    "/",
+    var.github_repository, "@", var.github_repository_id,
+  ])
 }
 
-resource "azurerm_federated_identity_credential" "main_branch" {
-  name      = "github-main-branch"
-  parent_id = azurerm_user_assigned_identity.ci.id
-  audience  = ["api://AzureADTokenExchange"]
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = "repo:${var.github_owner}/${var.github_repository}:ref:refs/heads/main"
+# terraform-plan.yml, which runs on pull requests and targets no environment.
+resource "azurerm_federated_identity_credential" "pull_request" {
+  name                      = "github-pull-request"
+  user_assigned_identity_id = azurerm_user_assigned_identity.ci.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  subject                   = "${local.github_repo_claim}:pull_request"
+}
+
+# deploy.yml, which targets the dev environment so the run waits for approval.
+resource "azurerm_federated_identity_credential" "environment" {
+  name                      = "github-environment-${var.github_environment}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.ci.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = "https://token.actions.githubusercontent.com"
+  subject                   = "${local.github_repo_claim}:environment:${var.github_environment}"
 }
 
 # Read and write the state blobs, and take the lease during an operation.
