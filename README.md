@@ -140,12 +140,8 @@ Validation evidence, implementation phases, decisions, and troubleshooting recor
 ## Known open items
 
 Tracked as issues rather than left implicit:
-
-- Upstream TLS verification between web and API is disabled, pending a certificate chain check
-- The API's schema and health endpoints are readable through the public proxy
-- The API has no authentication and relies on internal ingress alone
 - A cold start after a long idle can return `504` to the first request
-- The recon path checks have not been re-run against the deployed site
+
 
 ## Repository structure
 
