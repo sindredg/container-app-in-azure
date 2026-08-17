@@ -24,7 +24,7 @@ variable "container_registry_name" {
 variable "api_image_tag" {
   description = "Immutable version tag of the API image stored in ACR."
   type        = string
-  default     = "0.1.0"
+  default     = "0.2.0"
 
   validation {
     condition     = can(regex("^\\d+\\.\\d+\\.\\d+$", var.api_image_tag))
@@ -35,7 +35,7 @@ variable "api_image_tag" {
 variable "web_image_tag" {
   description = "Immutable version tag of the web image stored in ACR."
   type        = string
-  default     = "0.2.0"
+  default     = "0.3.0"
 
   validation {
     condition     = can(regex("^\\d+\\.\\d+\\.\\d+$", var.web_image_tag))
