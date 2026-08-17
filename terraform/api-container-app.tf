@@ -19,6 +19,11 @@ resource "azurerm_container_app" "api" {
     identity = azurerm_user_assigned_identity.container_pull.id
   }
 
+  secret {
+    name  = "api-shared-secret"
+    value = random_password.api_shared_secret.result
+  }
+
   # Internal ingress. The FQDN carries an .internal. segment and resolves only
   # inside the environment, so the web container is the only route to this app.
   ingress {
@@ -52,6 +57,13 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "SERVICE_VERSION"
         value = var.api_image_tag
+      }
+
+      # Every route except /health rejects a request without this value.
+      # /health stays open because the platform probes call it directly.
+      env {
+        name        = "API_SHARED_SECRET"
+        secret_name = "api-shared-secret"
       }
 
       startup_probe {
