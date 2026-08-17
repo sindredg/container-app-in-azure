@@ -1,8 +1,8 @@
 # Azure Container Platform
 
-Two containerised services on Azure Container Apps — a public web tier and an internal API — built and operated entirely with Terraform.
+Two containerised services on Azure Container Apps. A public web tier and an internal API, built and operated with Terraform.
 
-Built in phases, each with a [worklog](docs/worklog/) and a record of the [decisions](docs/decisions.md) behind it.
+Built in phases, each with a [worklog](docs/worklog/) and a record of the [decisions](docs/decisions.md).
 
 ## Live Container App
 
@@ -10,33 +10,7 @@ Built in phases, each with a [worklog](docs/worklog/) and a record of the [decis
 
 Both services scale to zero when idle, so the first request after a quiet period may be slow or time out while a container starts. A retry succeeds. The site may also be briefly unavailable during a release.
 
-## Current status
-
-| Component | Status |
-|---|---|
-| Resource group | Deployed |
-| Log Analytics | Deployed |
-| Container Apps environment | Deployed |
-| Azure Container Registry | Deployed |
-| Managed pull identity | Deployed |
-| Remote Terraform state | Deployed |
-| Public web Container App | Deployed |
-| Routing and response hardening | Deployed |
-| Network-level request logging | Deployed |
-| Internal API Container App | Deployed |
-| Same-origin proxy from web to API | Deployed |
-| Operational validation | In progress |
-| Per-app identities with repository conditions | Next |
-| Scaling above one replica | Planned |
-| Azure SQL Database with Entra authentication | Planned |
-| Automated delivery with federated credentials | Planned |
-| VNet-integrated environment | Planned |
-| Private endpoints for registry, state, and database | Planned |
-| Container image scanning | Planned |
-| Microsoft Sentinel detection rules | Planned |
-| Scaling and recovery tests | Planned |
-
-## Target architecture
+## Architecture
 
 The complete design. The status table above tracks how much of it exists so far.
 
@@ -77,6 +51,32 @@ flowchart TB
     TF -->|"remote state and locking"| ST
     GHA -->|"plan and apply"| TF
 ```
+
+## Current status
+
+| Component | Status |
+|---|---|
+| Resource group | Deployed |
+| Log Analytics | Deployed |
+| Container Apps environment | Deployed |
+| Azure Container Registry | Deployed |
+| Managed pull identity | Deployed |
+| Remote Terraform state | Deployed |
+| Public web Container App | Deployed |
+| Routing and response hardening | Deployed |
+| Network-level request logging | Deployed |
+| Internal API Container App | Deployed |
+| Same-origin proxy from web to API | Deployed |
+| Operational validation | In progress |
+| Per-app identities with repository conditions | Next |
+| Scaling above one replica | Planned |
+| Azure SQL Database with Entra authentication | Planned |
+| Automated delivery with federated credentials | Planned |
+| VNet-integrated environment | Planned |
+| Private endpoints for registry, state, and database | Planned |
+| Container image scanning | Planned |
+| Microsoft Sentinel detection rules | Planned |
+| Scaling and recovery tests | Planned |
 
 ## How it fits together
 
