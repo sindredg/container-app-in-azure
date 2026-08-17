@@ -22,7 +22,11 @@ jobs:
     environment: dev
 
     steps:
+      # Full history so the build step can diff this push and tell whether
+      # app source moved without its image tag moving with it.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: azure/login@v2
         with:
@@ -63,14 +67,34 @@ jobs:
           API_TAG: ${{ steps.tags.outputs.api }}
         run: |
           set -euo pipefail
+
+          # Did this push touch the source for a service?
+          changed() {
+            local dir="$1"
+            [ -n "$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- "$dir" 2>/dev/null)" ]
+          }
+
           push_if_missing() {
             local repo="$1" tag="$2" context="$3"
+
             if az acr repository show \
                  --name "${{ vars.ACR_NAME }}" \
                  --image "$repo:$tag" >/dev/null 2>&1; then
-              echo "$repo:$tag already published, skipping build"
+
+              # Tags are immutable, so an existing tag is never rebuilt. If the
+              # source changed anyway, the deployment would silently ship the
+              # old image. Fail instead, because that mismatch is invisible
+              # until something breaks at runtime.
+              if changed "$context"; then
+                echo "::error::$context changed in this push but $repo:$tag is already published."
+                echo "::error::Bump the tag in terraform/variables.tf so the change is built and released."
+                exit 1
+              fi
+
+              echo "$repo:$tag already published and $context unchanged, skipping build"
               return
             fi
+
             echo "building $repo:$tag"
             # The runner is amd64 and so is Container Apps, but the flag stays
             # explicit so the build does not silently follow the host.
