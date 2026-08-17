@@ -14,25 +14,27 @@ resource "azurerm_user_assigned_identity" "ci" {
   tags                = local.common_tags
 }
 
+# parent_id is correct for AzureRM 4.x. Version 5 renames it to
+# user_assigned_identity_id and drops resource_group_name entirely,
+# so this block changes when the provider constraint moves.
+#
 # Subject strings must match exactly what GitHub sends. A pull request token
 # always carries subject repo:OWNER/REPO:pull_request regardless of branch,
 # while a push to main carries the ref form.
 resource "azurerm_federated_identity_credential" "pull_request" {
-  name                = "github-pull-request"
-  resource_group_name = azurerm_resource_group.state.name
-  parent_id           = azurerm_user_assigned_identity.ci.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_owner}/${var.github_repository}:pull_request"
+  name      = "github-pull-request"
+  parent_id = azurerm_user_assigned_identity.ci.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_owner}/${var.github_repository}:pull_request"
 }
 
 resource "azurerm_federated_identity_credential" "main_branch" {
-  name                = "github-main-branch"
-  resource_group_name = azurerm_resource_group.state.name
-  parent_id           = azurerm_user_assigned_identity.ci.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = "https://token.actions.githubusercontent.com"
-  subject             = "repo:${var.github_owner}/${var.github_repository}:ref:refs/heads/main"
+  name      = "github-main-branch"
+  parent_id = azurerm_user_assigned_identity.ci.id
+  audience  = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_owner}/${var.github_repository}:ref:refs/heads/main"
 }
 
 # Read and write the state blobs, and take the lease during an operation.
