@@ -38,3 +38,22 @@ variable "container_registry_name" {
   type        = string
   default     = "acrcslabsindredgdev"
 }
+
+
+variable "github_owner_id" {
+  description = "Numeric ID of the GitHub account. Appears in the OIDC subject claim."
+  type        = string
+  default     = "186042440"
+}
+
+variable "github_repository_id" {
+  description = "Numeric ID of the repository. Appears in the OIDC subject claim."
+  type        = string
+  default     = "1332416382"
+}
+
+variable "github_environment" {
+  description = "GitHub deployment environment the apply job waits on for approval."
+  type        = string
+  default     = "dev"
+}
