@@ -18,6 +18,8 @@ Each phase page is a summary: goal, what was completed, what was validated, and 
 | [8. Routing, hardening, and log privacy](phases/phase-08-web-routing-and-log-privacy.md) | Real `404` responses, protective headers, network-level request logging. |
 | [9. Internal API container](phases/phase-09-internal-api-container-local.md) | API service and same-origin proxy built and verified locally. |
 | [10. Internal API Container App](phases/phase-10-internal-api-container-app.md) | API deployed behind internal ingress, reached through the public site. |
+| [11. API authentication and upstream TLS](phases/phase-11-api-authentication-and-upstream-tls.md) | Shared secret between proxy and API, verified upstream certificate, schema closed. |
+| [12. GitHub Actions pipeline](phases/phase-12-github-actions-pipeline.md) | Plan on every pull request, gated deploy with build, apply, and smoke test. |
 
 ## Worklog
 
@@ -35,6 +37,10 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 | 8 | [Routing, hardening, and log privacy](worklog/phase-08-web-routing-and-log-privacy.md) |
 | 9 | [Internal API container](worklog/phase-09-internal-api-container-local.md) |
 | 10 | [Internal API Container App](worklog/phase-10-internal-api-container-app.md) |
+| 11 | [API authentication and upstream TLS](worklog/phase-11-api-authentication-and-upstream-tls.md) |
+| 12 | [GitHub Actions pipeline](worklog/phase-12-github-actions-pipeline.md) |
+| 11 | [API authentication and upstream TLS](worklog/phase-11-api-authentication-and-upstream-tls.md) |
+| 12 | [GitHub Actions pipeline](worklog/phase-12-github-actions-pipeline.md) |
 
 ## Supporting logs
 
