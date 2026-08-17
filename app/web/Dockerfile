@@ -1,12 +1,17 @@
 FROM nginx:1.29.8-alpine
 
+# Needed to verify the API upstream certificate. Without a trust store,
+# proxy_ssl_verify has nothing to check the chain against.
+RUN apk add --no-cache ca-certificates
+
 COPY default.conf.template /etc/nginx/templates/default.conf.template
 COPY index.html styles.css app.js /usr/share/nginx/html/
 
 # Restrict envsubst to API_* names. Without this it substitutes every
 # environment variable and eats $uri, $status and the whole privacy log format.
 ENV NGINX_ENVSUBST_FILTER=^API_ \
-    API_UPSTREAM=http://api:8080
+    API_UPSTREAM=http://api:8080 \
+    API_SHARED_SECRET=""
 
 EXPOSE 8080
 

@@ -3,6 +3,9 @@ services:
     build: ./app/api
     environment:
       SERVICE_VERSION: "0.1.0-local"
+      # local only. Azure gets a generated value through a Container Apps secret.
+      API_SHARED_SECRET: "local-development-secret"
+      ENABLE_OPENAPI: "true"
 
   web:
     build: ./app/web
@@ -10,6 +13,7 @@ services:
       - "8080:8080"
     environment:
       API_UPSTREAM: http://api:8080
+      API_SHARED_SECRET: "local-development-secret"
     depends_on:
       api:
         condition: service_healthy

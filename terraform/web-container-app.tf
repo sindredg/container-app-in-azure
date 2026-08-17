@@ -17,6 +17,11 @@ resource "azurerm_container_app" "web" {
     identity = azurerm_user_assigned_identity.container_pull.id
   }
 
+  secret {
+    name  = "api-shared-secret"
+    value = random_password.api_shared_secret.result
+  }
+
   ingress {
     external_enabled           = true
     allow_insecure_connections = false
@@ -47,6 +52,12 @@ resource "azurerm_container_app" "web" {
       env {
         name  = "API_UPSTREAM"
         value = "https://${azurerm_container_app.api.ingress[0].fqdn}"
+      }
+
+      # Nginx sends this to the API as X-Api-Key on every proxied request.
+      env {
+        name        = "API_SHARED_SECRET"
+        secret_name = "api-shared-secret"
       }
 
       startup_probe {

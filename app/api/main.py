@@ -5,6 +5,7 @@ caller, so this service is never addressable from the internet.
 """
 
 # --- imports ---
+import hmac
 import logging
 import os
 import time
@@ -17,15 +18,28 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 SERVICE_NAME = "api"
 SERVICE_VERSION = os.getenv("SERVICE_VERSION", "0.0.0-local")
 
+# --- shared secret: set on both apps by Terraform and sent by the web proxy.
+# --- A browser cannot supply it, so only the proxy can reach these routes. ---
+SHARED_SECRET = os.getenv("API_SHARED_SECRET", "")
+SECRET_HEADER = "x-api-key"
+
+# --- the platform calls /health directly on the container, not through the
+# --- proxy, so requiring the secret there would fail every probe ---
+UNAUTHENTICATED_PATHS = frozenset({"/health"})
+
 # --- logging setup ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(SERVICE_NAME)
 
-# --- app: interactive docs are off because their assets come from a CDN the CSP blocks ---
+# --- app: interactive docs are off because their assets come from a CDN the CSP
+# --- blocks. The schema follows the same rule: nothing consumes it in Azure, so
+# --- it is opt-in and stays off unless a local run asks for it. ---
+ENABLE_OPENAPI = os.getenv("ENABLE_OPENAPI", "false").lower() == "true"
+
 app = FastAPI(
     title="Cloud Operations Lab API",
     version=SERVICE_VERSION,
-    openapi_url="/openapi.json",
+    openapi_url="/openapi.json" if ENABLE_OPENAPI else None,
     docs_url=None,
     redoc_url=None,
 )
@@ -38,6 +52,25 @@ def platform_metadata():
         "revision": os.getenv("CONTAINER_APP_REVISION", "local"),
         "replica": os.getenv("CONTAINER_APP_REPLICA_NAME", "local"),
     }
+
+
+# --- auth: registered before the logger on purpose. Starlette makes the last
+# --- registered middleware the outermost one, so logging wraps this and a
+# --- rejected request still gets a log line. ---
+@app.middleware("http")
+async def require_shared_secret(request: Request, call_next):
+    if request.url.path in UNAUTHENTICATED_PATHS:
+        return await call_next(request)
+
+    presented = request.headers.get(SECRET_HEADER, "")
+
+    # compare_digest takes the same time whichever character differs, so the
+    # value cannot be recovered one character at a time by timing the reply.
+    # An unset secret fails closed rather than allowing everything through.
+    if not SHARED_SECRET or not hmac.compare_digest(presented, SHARED_SECRET):
+        return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+
+    return await call_next(request)
 
 
 # --- request logging: records what was asked for, never who asked ---
