@@ -1,0 +1,109 @@
+name: deploy
+
+# Runs after a pull request merges. Builds and pushes any image whose tag is
+# not already in the registry, then applies. The GitHub environment named dev
+# holds the run until a reviewer approves it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - "app/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: init
+        run: terraform init -input=false
+        working-directory: terraform
+
+      # Read the tags from the configuration rather than from state. State
+      # still holds the previous values until the apply below succeeds, so
+      # terraform output would return the tag being replaced.
+      - name: read image tags
+        id: tags
+        working-directory: terraform
+        run: |
+          web=$(echo "var.web_image_tag" | terraform console -no-color | tr -d '"')
+          api=$(echo "var.api_image_tag" | terraform console -no-color | tr -d '"')
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          echo "web:$web api:$api"
+
+      - name: registry login
+        run: az acr login --name ${{ vars.ACR_NAME }}
+
+      # Tags are immutable, so an existing tag is never rebuilt or overwritten.
+      # Bumping the variable in terraform is what triggers a build.
+      - name: build and push changed images
+        env:
+          ACR: ${{ vars.ACR_NAME }}.azurecr.io
+          WEB_TAG: ${{ steps.tags.outputs.web }}
+          API_TAG: ${{ steps.tags.outputs.api }}
+        run: |
+          set -euo pipefail
+          push_if_missing() {
+            local repo="$1" tag="$2" context="$3"
+            if az acr repository show \
+                 --name "${{ vars.ACR_NAME }}" \
+                 --image "$repo:$tag" >/dev/null 2>&1; then
+              echo "$repo:$tag already published, skipping build"
+              return
+            fi
+            echo "building $repo:$tag"
+            # The runner is amd64 and so is Container Apps, but the flag stays
+            # explicit so the build does not silently follow the host.
+            docker buildx build \
+              --platform linux/amd64 \
+              --tag "$ACR/$repo:$tag" \
+              --push \
+              "$context"
+          }
+
+          push_if_missing web "$WEB_TAG" ./app/web
+          push_if_missing api "$API_TAG" ./app/api
+
+      - name: apply
+        working-directory: terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: terraform apply -input=false -auto-approve
+
+      # Proves the deployment serves traffic before the run is called green.
+      - name: smoke test
+        working-directory: terraform
+        run: |
+          set -euo pipefail
+          url=$(terraform output -raw web_container_app_url)
+          echo "checking $url"
+          for i in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$url/" || true)
+            [ "$code" = "200" ] && echo "site returned 200" && break
+            echo "attempt $i returned $code, retrying"
+            sleep 10
+          done
+          [ "$code" = "200" ]
+          api=$(curl -s -o /dev/null -w "%{http_code}" "$url/api/status" || true)
+          echo "api path returned $api"
+          [ "$api" = "200" ]
