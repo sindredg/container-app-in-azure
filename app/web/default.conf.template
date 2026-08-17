@@ -47,9 +47,18 @@ server {
         proxy_set_header X-Client-Network $client_net;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # needed once this points at an https:// upstream in Azure
+        # proves the call came from this proxy. Substituted in at container
+        # start by envsubst, which is why the name has to begin with API_.
+        proxy_set_header X-Api-Key "${API_SHARED_SECRET}";
+
+        # the internal ingress presents a publicly trusted Microsoft certificate
+        # whose SAN covers *.internal.<environment domain>, so it verifies
         proxy_ssl_server_name on;
-        proxy_ssl_verify off;
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+        # the default depth of 1 stops at the leaf and rejects this chain,
+        # which reaches a root through one Microsoft intermediate
+        proxy_ssl_verify_depth 3;
 
         # the API scales to zero, so the first request pays a cold start
         proxy_connect_timeout 5s;
