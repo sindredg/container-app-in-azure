@@ -6,7 +6,7 @@ Built in phases, each with a [worklog](docs/worklog/) and a record of the [decis
 
 ## Live Container App
 
-[Cloud Operations Lab](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io)
+[Cloud Operations Lab (web app)](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io)
 
 Both services scale to zero when idle, so the first request after a quiet period may be slow or time out while a container starts. A retry succeeds. The site may also be briefly unavailable during a release.
 
@@ -72,37 +72,37 @@ flowchart TB
 | Scaling above one replica | Planned |
 | Azure SQL Database with Entra authentication | Planned |
 | Automated delivery with federated credentials | Planned |
-| VNet-integrated environment | Planned |
-| Private endpoints for registry, state, and database | Planned |
-| Container image scanning | Planned |
-| Microsoft Sentinel detection rules | Planned |
-| Scaling and recovery tests | Planned |
+| VNet-integrated environment | Potential |
+| Private endpoints for registry, state, and database | Potential |
+| Container image scanning | Potential |
+| Microsoft Sentinel detection rules | Potential |
+| Scaling and recovery tests | Potential |
 
 ## How it fits together
 
-**Public web app** — the only thing on the internet. Nginx serves a static site and carries an `/api/` location that proxies to the API from inside the container. Because the proxy happens server-side rather than in the browser, the API's hostname never reaches client code, every request the browser makes is to its own origin, and no CORS configuration exists anywhere in the system.
+**Public web app:** the only thing on the internet. Nginx serves a static site and carries an `/api/` location that proxies to the API from inside the container. Because the proxy happens server-side rather than in the browser, the API's hostname never reaches client code, every request the browser makes is to its own origin, and no CORS configuration exists anywhere in the system.
 
-**Internal API** — a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
+**Internal API:** a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
 
-**Database** *(planned)* — Azure SQL Database, connected to by the API using its managed identity rather than a password in a connection string. It gives the application something real to hold: which revisions have served traffic, and when the platform last scaled up from zero.
+**Database:** *(potential)* Azure SQL Database, connected to by the API using its managed identity rather than a password in a connection string. It gives the application something real to hold: which revisions have served traffic, and when the platform last scaled up from zero.
 
 **Container Apps environment** — the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
 
-**Container Registry** — private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
+**Container Registry:** private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
 
-**Managed identity** — how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image. The database will authenticate the same way.
+**Managed identity:** how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image. The database will authenticate the same way.
 
-**Log Analytics** — where both applications and the platform itself send logs. Application logs from each tier land alongside platform events like scaling and revision changes, so a single request can be followed across both services. The web tier records the client's `/24` network rather than their address; the API records no address at all.
+**Log Analytics:** where both applications and the platform itself send logs. Application logs from each tier land alongside platform events like scaling and revision changes, so a single request can be followed across both services. The web tier records the client's `/24` network rather than their address; the API records no address at all.
 
-**Terraform** — every resource above is declared in code, with state in Azure Blob Storage, locked during changes and versioned for recovery. Nothing is created by hand, so the environment can be read from the repository and rebuilt from it. A separate bootstrap root creates the state backend itself, since it cannot store its own first state.
+**Terraform:** every resource above is declared in code, with state in Azure Blob Storage, locked during changes and versioned for recovery. Nothing is created by hand, so the environment can be read from the repository and rebuilt from it. A separate bootstrap root creates the state backend itself, since it cannot store its own first state.
 
-**Docker and Compose** — both images are built locally and verified before they reach Azure. In the local composition the API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress boundary rather than approximating it.
+**Docker and Compose:** both images are built locally and verified before they reach Azure. In the local composition the API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress boundary rather than approximating it.
 
 ## Current deployment
 
 Two container apps share one environment and one read-only pull identity.
 
-**Public web app** — Nginx serving a static site, image `web:0.2.0`
+**Public web app:** Nginx serving a static site, image `web:0.2.0`
 
 - Azure-managed HTTPS on external ingress
 - Real `404` responses for missing paths
@@ -111,7 +111,7 @@ Two container apps share one environment and one read-only pull identity.
 - Access logs truncated to the client `/24` network
 - A `/api/` location proxying to the internal API, so the browser only ever calls its own origin
 
-**Internal API** — FastAPI, image `api:0.1.0`
+**Internal API:** FastAPI, image `api:0.1.0`
 
 - Internal ingress only. The hostname resolves publicly, but the environment refuses to route to it
 - The version reported at runtime comes from the deployed image tag, so the two cannot drift
