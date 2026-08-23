@@ -4,22 +4,17 @@ variable "registry_name" {
 }
 
 variable "identity_name" {
-  description = "Name of the shared pull identity. Retained until every app has moved to its own."
+  description = "Name of the shared pull identity."
   type        = string
 }
 
-variable "pull_identities" {
-  description = "One passwordless identity per application, each scoped to the single repository it pulls. The key names the identity, the value is the repository it may read."
-  type        = map(string)
-}
-
 variable "resource_group_name" {
-  description = "Resource group holding the registry and identities."
+  description = "Resource group holding the registry and identity."
   type        = string
 }
 
 variable "location" {
-  description = "Azure region for the registry and identities."
+  description = "Azure region for the registry and identity."
   type        = string
 }
 

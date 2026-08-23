@@ -9,11 +9,6 @@ output "registry_name" {
 }
 
 output "identity_id" {
-  description = "Resource ID of the shared pull identity. Retained during the move to per-app identities."
+  description = "Resource ID of the shared pull identity."
   value       = azurerm_user_assigned_identity.container_pull.id
-}
-
-output "app_identity_ids" {
-  description = "Resource ID of each per-app pull identity, keyed by application."
-  value       = { for k, v in azurerm_user_assigned_identity.app : k => v.id }
 }

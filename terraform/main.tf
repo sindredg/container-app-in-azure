@@ -29,14 +29,8 @@ module "platform" {
 module "registry" {
   source = "./modules/registry"
 
-  registry_name = var.container_registry_name
-  identity_name = "id-${local.project_name}-pull-${var.environment}"
-
-  # Key names the identity, value is the one repository it may read.
-  pull_identities = {
-    "${local.project_name}-web-${var.environment}" = "web"
-    "${local.project_name}-api-${var.environment}" = "api"
-  }
+  registry_name       = var.container_registry_name
+  identity_name       = "id-${local.project_name}-pull-${var.environment}"
   resource_group_name = module.platform.resource_group_name
   location            = module.platform.location
   tags                = local.common_tags
@@ -48,7 +42,7 @@ module "api_app" {
   name                         = "ca-${local.project_name}-api-${var.environment}"
   container_app_environment_id = module.platform.container_app_environment_id
   resource_group_name          = module.platform.resource_group_name
-  identity_id                  = module.registry.app_identity_ids["${local.project_name}-api-${var.environment}"]
+  identity_id                  = module.registry.identity_id
   registry_login_server        = module.registry.login_server
   image_tag                    = var.api_image_tag
   shared_secret                = random_password.api_shared_secret.result
@@ -64,7 +58,7 @@ module "web_app" {
   name                         = "ca-${local.project_name}-web-${var.environment}"
   container_app_environment_id = module.platform.container_app_environment_id
   resource_group_name          = module.platform.resource_group_name
-  identity_id                  = module.registry.app_identity_ids["${local.project_name}-web-${var.environment}"]
+  identity_id                  = module.registry.identity_id
   registry_login_server        = module.registry.login_server
   image_tag                    = var.web_image_tag
   api_fqdn                     = module.api_app.internal_fqdn
