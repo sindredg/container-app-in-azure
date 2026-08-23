@@ -32,3 +32,8 @@ output "subscription_id" {
   value       = data.azurerm_client_config.current.subscription_id
   sensitive   = true
 }
+
+output "app_pull_identity_ids" {
+  description = "Resource ID of each per-app pull identity, keyed by identity name."
+  value       = { for k, v in azurerm_user_assigned_identity.app_pull : k => v.id }
+}

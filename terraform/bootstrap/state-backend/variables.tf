@@ -57,3 +57,14 @@ variable "github_environment" {
   type        = string
   default     = "dev"
 }
+
+
+variable "app_pull_identities" {
+  description = "One pull identity per application. The key is the identity name, the value is the single repository it may read."
+  type        = map(string)
+
+  default = {
+    "id-container-scale-lab-web-pull-dev" = "web"
+    "id-container-scale-lab-api-pull-dev" = "api"
+  }
+}
