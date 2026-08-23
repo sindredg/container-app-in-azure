@@ -59,3 +59,21 @@ variable "web_previous_revision_suffix" {
   type        = string
   default     = ""
 }
+
+
+variable "web_max_replicas" {
+  description = "Ceiling on web replicas. Raised temporarily during a scale test, then returned to the baseline."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.web_max_replicas >= 1 && var.web_max_replicas <= 5
+    error_message = "Keep the ceiling between 1 and 5 so a test cannot run up an unexpected bill."
+  }
+}
+
+variable "web_concurrent_requests" {
+  description = "Concurrent requests per replica before Azure adds another."
+  type        = number
+  default     = 10
+}
