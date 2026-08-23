@@ -15,6 +15,11 @@ permissions:
   contents: read
   pull-requests: write
 
+# Shares the state lock with the deploy workflow, so both sit in one queue.
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
 jobs:
   plan:
     runs-on: ubuntu-latest
