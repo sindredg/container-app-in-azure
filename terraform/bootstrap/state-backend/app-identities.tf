@@ -1,3 +1,13 @@
+# Tagged for the platform, not for the state infrastructure around them.
+locals {
+  app_pull_tags = {
+    environment = "dev"
+    managed_by  = "terraform"
+    project     = "container-scale-lab"
+    purpose     = "container-registry-pull"
+  }
+}
+
 # Granted from this root so the pipeline cannot change who has registry access.
 resource "azurerm_user_assigned_identity" "app_pull" {
   for_each = var.app_pull_identities
@@ -6,7 +16,7 @@ resource "azurerm_user_assigned_identity" "app_pull" {
   resource_group_name = data.azurerm_resource_group.platform.name
   location            = data.azurerm_resource_group.platform.location
 
-  tags = local.common_tags
+  tags = local.app_pull_tags
 }
 
 # Read only, and scoped to one repository. Without a condition this role is registry wide.
