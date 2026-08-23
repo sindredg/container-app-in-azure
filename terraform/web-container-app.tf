@@ -56,11 +56,14 @@ resource "azurerm_container_app" "web" {
     revision_suffix = replace(var.web_image_tag, ".", "-")
 
     min_replicas = 0
-    max_replicas = 1
+    max_replicas = var.web_max_replicas
 
     http_scale_rule {
-      name                = "http-requests"
-      concurrent_requests = 10
+      name = "http-requests"
+
+      # Azure adds a replica when average concurrent requests per replica
+      # exceeds this. Lower it to make scaling visible in a short test.
+      concurrent_requests = var.web_concurrent_requests
     }
 
     container {
