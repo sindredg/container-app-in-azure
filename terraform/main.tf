@@ -38,7 +38,6 @@ module "registry" {
   source = "./modules/registry"
 
   registry_name       = var.container_registry_name
-  identity_name       = "id-${local.project_name}-pull-${var.environment}"
   resource_group_name = module.platform.resource_group_name
   location            = module.platform.location
   tags                = local.common_tags

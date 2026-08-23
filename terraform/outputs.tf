@@ -23,9 +23,9 @@ output "container_registry_login_server" {
   value       = module.registry.login_server
 }
 
-output "container_pull_identity_id" {
-  description = "Resource ID of the managed identity used for image pulls."
-  value       = module.registry.identity_id
+output "app_pull_identity_ids" {
+  description = "Pull identity used by each app. Each may read only its own repository."
+  value       = { for k, v in data.azurerm_user_assigned_identity.app_pull : k => v.id }
 }
 
 output "web_container_app_name" {
