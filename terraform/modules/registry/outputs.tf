@@ -7,8 +7,3 @@ output "registry_name" {
   description = "Name of the container registry."
   value       = azurerm_container_registry.main.name
 }
-
-output "identity_id" {
-  description = "Resource ID of the shared pull identity."
-  value       = azurerm_user_assigned_identity.container_pull.id
-}
