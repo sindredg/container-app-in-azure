@@ -53,6 +53,34 @@ revision_suffix = "0-3-0-876fac"
 
 The failure was quiet. Nothing errored, the deployment succeeded, and the only symptom was a revision name that looked like the ones the change was meant to replace.
 
+## Probe recovery
+
+Startup, readiness, and liveness probes were configured in phase 7 but never observed doing anything. Configuration is not evidence.
+
+A replica was restarted while the site was polled once a second.
+
+![Restarting the running revision](../images/phase-13-replica-restart.png)
+
+Proves the restart was issued against the revision serving traffic.
+
+![Traffic continues through the restart](../images/phase-13-traffic-uninterrupted.png)
+
+Proves no request failed. Every response through the restart was 200.
+
+The system log explains why:
+
+```text
+Readiness probe failed: connect: connection refused
+Readiness probe failed: connect: connection refused
+Container created
+Container started
+Successfully pulled image "web:0.3.0" in 67ms
+```
+
+The readiness probe failing is the mechanism working, not a fault. While a replacement container was starting and not yet answering on `/health`, the probe marked it unready and Azure kept it out of the load balancer. Traffic went only to replicas that could serve it.
+
+Without a readiness probe the platform would have routed requests to a container that was still starting, and those requests would have failed.
+
 ## Result
 
 | Check | Result |
@@ -62,3 +90,4 @@ The failure was quiet. Nothing errored, the deployment succeeded, and the only s
 | Scale in | Back to zero after the 300 second cooldown |
 | Rollback mechanism | Traffic weight, no redeploy |
 | Revision names | Unique per configuration, release version readable |
+| Restart recovery | Replicas replaced with no failed request |
