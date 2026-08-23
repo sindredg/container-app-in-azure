@@ -1,6 +1,3 @@
-# The internal API. Internal ingress means the FQDN resolves only inside the
-# environment, so the web app is the only route to it.
-
 resource "azurerm_container_app" "api" {
   name                         = var.name
   container_app_environment_id = var.container_app_environment_id
@@ -57,8 +54,7 @@ resource "azurerm_container_app" "api" {
         value = var.image_tag
       }
 
-      # Every route except /health rejects a request without this value.
-      # /health stays open because the platform probes call it directly.
+      # Required on every route except /health, which the platform probes call directly.
       env {
         name        = "API_SHARED_SECRET"
         secret_name = "api-shared-secret"

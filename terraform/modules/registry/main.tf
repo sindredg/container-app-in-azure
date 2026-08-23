@@ -1,6 +1,3 @@
-# The private image supply path: where images live, and the passwordless
-# identities allowed to read them.
-
 resource "azurerm_container_registry" "main" {
   name                = var.registry_name
   resource_group_name = var.resource_group_name
@@ -13,9 +10,7 @@ resource "azurerm_container_registry" "main" {
   tags = var.tags
 }
 
-# The shared identity both apps used before they had their own. Kept until the
-# per-app identities are confirmed working, so a failed pull has somewhere to
-# roll back to. Removed in a follow-up.
+# Previous shared identity, kept as a rollback target until per-app identities are proven.
 resource "azurerm_user_assigned_identity" "container_pull" {
   name                = var.identity_name
   resource_group_name = var.resource_group_name
@@ -31,10 +26,7 @@ resource "azurerm_role_assignment" "container_pull" {
   skip_service_principal_aad_check = true
 }
 
-# One identity per application.
-#
-# Sharing one identity meant compromising either container granted the same
-# access, and an audit log could not say which application pulled what.
+# One identity per app, so a compromise is contained and pulls are attributable.
 resource "azurerm_user_assigned_identity" "app" {
   for_each = var.pull_identities
 
@@ -45,15 +37,7 @@ resource "azurerm_user_assigned_identity" "app" {
   tags = var.tags
 }
 
-# Read only, and only the one repository this application runs.
-#
-# An ABAC-enabled role assigned without a condition is registry wide. The
-# condition is what scopes it, so leaving it off would grant exactly what
-# this change exists to remove.
-#
-# The expression reads: unless the action is reading repository content or
-# metadata, allow it. If it is, the repository name must match. That shape
-# keeps actions the condition does not describe from being denied outright.
+# Read only, and scoped to one repository. Without a condition this role is registry wide.
 resource "azurerm_role_assignment" "app" {
   for_each = var.pull_identities
 
