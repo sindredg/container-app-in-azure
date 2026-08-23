@@ -2,7 +2,10 @@ resource "azurerm_container_app" "web" {
   name                         = "ca-${local.project_name}-web-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.main.name
-  revision_mode                = "Single"
+  revision_mode                = "Multiple"
+
+  # Rollback needs the previous revision to still exist.
+  max_inactive_revisions = 5
 
   identity {
     type = "UserAssigned"
@@ -28,13 +31,30 @@ resource "azurerm_container_app" "web" {
     target_port                = 8080
     transport                  = "auto"
 
+    # Normal state is one block sending everything to the newest revision.
+    # Setting web_previous_revision_suffix adds a second block, which is how a
+    # split, a promotion, and a rollback are all expressed as one variable change.
+    dynamic "traffic_weight" {
+      for_each = var.web_previous_revision_suffix == "" ? [] : [1]
+
+      content {
+        revision_suffix = var.web_previous_revision_suffix
+        percentage      = 100 - var.web_latest_traffic_percentage
+      }
+    }
+
     traffic_weight {
       latest_revision = true
-      percentage      = 100
+      percentage      = var.web_latest_traffic_percentage
     }
   }
 
   template {
+    # Azure generates a random suffix unless given one. Deriving it from the
+    # image tag means a revision name says which release it is running.
+    # Dots are not valid in a revision name, so 0.3.0 becomes 0-3-0.
+    revision_suffix = replace(var.web_image_tag, ".", "-")
+
     min_replicas = 0
     max_replicas = 1
 
