@@ -1,6 +1,3 @@
-# The shared runtime boundary. Everything else in the project is deployed
-# into the resource group and environment created here.
-
 resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location

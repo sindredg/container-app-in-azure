@@ -1,11 +1,4 @@
-# The identity GitHub Actions uses to reach Azure.
-#
-# It lives in the bootstrap root on purpose. A human applies this root, and CI
-# only ever applies the platform root. That means the pipeline cannot widen its
-# own permissions, because the grants below are outside what it can change.
-#
-# There is no client secret anywhere. GitHub presents a short-lived OIDC token,
-# Entra checks it against the federated credentials, and issues an access token.
+# CI identity. Lives here because a human applies this root, so the pipeline cannot widen its own grants.
 
 resource "azurerm_user_assigned_identity" "ci" {
   name                = "id-container-scale-lab-ci"
@@ -14,17 +7,7 @@ resource "azurerm_user_assigned_identity" "ci" {
   tags                = local.common_tags
 }
 
-# user_assigned_identity_id is the current name. The 4.x provider still accepts
-# the old parent_id but warns, and v5 removes it along with resource_group_name.
-#
-# The subject has to match byte for byte what GitHub puts in the token.
-# Two things make that less obvious than it looks:
-#
-#   1. GitHub qualifies the owner and repository with their numeric IDs, so
-#      trust cannot be inherited by renaming a repo or reusing a namespace.
-#   2. A job that targets an environment gets an environment claim INSTEAD of
-#      a ref claim, not in addition to it. The deploy job uses the dev
-#      environment for its approval gate, so ref:refs/heads/main never appears.
+# Subjects must match GitHub byte for byte: numeric IDs are included, and an environment claim replaces the ref claim.
 locals {
   github_repo_claim = join("", [
     "repo:",
@@ -59,8 +42,7 @@ resource "azurerm_role_assignment" "ci_state_access" {
   principal_id         = azurerm_user_assigned_identity.ci.principal_id
 }
 
-# The platform resources CI manages. Looked up rather than created here,
-# because the platform root owns them.
+# Looked up rather than created, because the platform root owns them.
 data "azurerm_resource_group" "platform" {
   name = var.platform_resource_group_name
 }
@@ -77,8 +59,7 @@ resource "azurerm_role_assignment" "ci_platform_contributor" {
   principal_id         = azurerm_user_assigned_identity.ci.principal_id
 }
 
-# Push only. Under ABAC repository permissions this role cannot delete tags,
-# and it does not include catalog listing.
+# Push only. This role cannot delete tags and does not include catalog listing.
 resource "azurerm_role_assignment" "ci_registry_writer" {
   scope                = data.azurerm_container_registry.platform.id
   role_definition_name = "Container Registry Repository Writer"
