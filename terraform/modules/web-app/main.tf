@@ -1,38 +1,38 @@
 locals {
   # Only the values that produce a new revision when they change.
-  web_config_hash = substr(sha1(jsonencode({
-    image      = var.web_image_tag
-    max        = var.web_max_replicas
-    concurrent = var.web_concurrent_requests
-    upstream   = azurerm_container_app.api.ingress[0].fqdn
+  config_hash = substr(sha1(jsonencode({
+    image      = var.image_tag
+    max        = var.max_replicas
+    concurrent = var.concurrent_requests
+    upstream   = var.api_fqdn
   })), 0, 6)
 }
 
+# The only public entry point. It serves the site and proxies /api/ to the
+# internal API, so the browser never learns the API address.
+
 resource "azurerm_container_app" "web" {
-  name                         = "ca-${local.project_name}-web-${var.environment}"
-  container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  name                         = var.name
+  container_app_environment_id = var.container_app_environment_id
+  resource_group_name          = var.resource_group_name
   revision_mode                = "Multiple"
 
   # Rollback needs the previous revision to still exist.
   max_inactive_revisions = 5
 
   identity {
-    type = "UserAssigned"
-
-    identity_ids = [
-      azurerm_user_assigned_identity.container_pull.id
-    ]
+    type         = "UserAssigned"
+    identity_ids = [var.identity_id]
   }
 
   registry {
-    server   = azurerm_container_registry.main.login_server
-    identity = azurerm_user_assigned_identity.container_pull.id
+    server   = var.registry_login_server
+    identity = var.identity_id
   }
 
   secret {
     name  = "api-shared-secret"
-    value = random_password.api_shared_secret.result
+    value = var.shared_secret
   }
 
   ingress {
@@ -42,20 +42,20 @@ resource "azurerm_container_app" "web" {
     transport                  = "auto"
 
     # Normal state is one block sending everything to the newest revision.
-    # Setting web_previous_revision_suffix adds a second block, which is how a
+    # Setting previous_revision_suffix adds a second block, which is how a
     # split, a promotion, and a rollback are all expressed as one variable change.
     dynamic "traffic_weight" {
-      for_each = var.web_previous_revision_suffix == "" ? [] : [1]
+      for_each = var.previous_revision_suffix == "" ? [] : [1]
 
       content {
-        revision_suffix = var.web_previous_revision_suffix
-        percentage      = 100 - var.web_latest_traffic_percentage
+        revision_suffix = var.previous_revision_suffix
+        percentage      = 100 - var.latest_traffic_percentage
       }
     }
 
     traffic_weight {
       latest_revision = true
-      percentage      = var.web_latest_traffic_percentage
+      percentage      = var.latest_traffic_percentage
     }
   }
 
@@ -69,28 +69,28 @@ resource "azurerm_container_app" "web" {
     # name that already exists, so it silently falls back to auto numbering.
     # Appending a hash of the settings that define a revision keeps the name
     # unique per configuration while the version stays readable.
-    revision_suffix = "${replace(var.web_image_tag, ".", "-")}-${local.web_config_hash}"
+    revision_suffix = "${replace(var.image_tag, ".", "-")}-${local.config_hash}"
 
     min_replicas = 0
-    max_replicas = var.web_max_replicas
+    max_replicas = var.max_replicas
 
     http_scale_rule {
       name = "http-requests"
 
       # Azure adds a replica when average concurrent requests per replica
       # exceeds this. Lower it to make scaling visible in a short test.
-      concurrent_requests = var.web_concurrent_requests
+      concurrent_requests = var.concurrent_requests
     }
 
     container {
       name   = "web"
-      image  = "${azurerm_container_registry.main.login_server}/web:${var.web_image_tag}"
+      image  = "${var.registry_login_server}/web:${var.image_tag}"
       cpu    = 0.25
       memory = "0.5Gi"
 
       env {
         name  = "API_UPSTREAM"
-        value = "https://${azurerm_container_app.api.ingress[0].fqdn}"
+        value = "https://${var.api_fqdn}"
       }
 
       # Nginx sends this to the API as X-Api-Key on every proxied request.
@@ -130,9 +130,5 @@ resource "azurerm_container_app" "web" {
     }
   }
 
-  depends_on = [
-    azurerm_role_assignment.container_pull
-  ]
-
-  tags = merge(local.common_tags, { component = "web" })
+  tags = var.tags
 }
