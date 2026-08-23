@@ -1,3 +1,13 @@
+locals {
+  # Only the values that produce a new revision when they change.
+  web_config_hash = substr(sha1(jsonencode({
+    image      = var.web_image_tag
+    max        = var.web_max_replicas
+    concurrent = var.web_concurrent_requests
+    upstream   = azurerm_container_app.api.ingress[0].fqdn
+  })), 0, 6)
+}
+
 resource "azurerm_container_app" "web" {
   name                         = "ca-${local.project_name}-web-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
@@ -53,7 +63,13 @@ resource "azurerm_container_app" "web" {
     # Azure generates a random suffix unless given one. Deriving it from the
     # image tag means a revision name says which release it is running.
     # Dots are not valid in a revision name, so 0.3.0 becomes 0-3-0.
-    revision_suffix = replace(var.web_image_tag, ".", "-")
+    #
+    # The tag alone is not enough. A config change that does not touch the
+    # image reuses the tag, and Azure cannot create a second revision with a
+    # name that already exists, so it silently falls back to auto numbering.
+    # Appending a hash of the settings that define a revision keeps the name
+    # unique per configuration while the version stays readable.
+    revision_suffix = "${replace(var.web_image_tag, ".", "-")}-${local.web_config_hash}"
 
     min_replicas = 0
     max_replicas = var.web_max_replicas
