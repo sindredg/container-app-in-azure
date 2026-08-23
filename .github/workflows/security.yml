@@ -1,0 +1,91 @@
+name: security
+
+# Runs on every pull request. Nothing here blocks a merge yet except TFLint,
+# which catches genuine configuration errors rather than opinions. Checkov and
+# Trivy report into the Security tab so the real finding volume is visible
+# before anything is enforced.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  tflint:
+    name: terraform lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v6
+
+      - name: initialise
+        run: tflint --init --config="${GITHUB_WORKSPACE}/.tflint.hcl"
+
+      - name: lint
+        run: tflint --recursive --format compact --config="${GITHUB_WORKSPACE}/.tflint.hcl"
+
+  checkov:
+    name: terraform security scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          framework: terraform
+          quiet: true
+          # Reporting only. Several findings will be decisions this project
+          # took deliberately, such as the Basic registry tier and the absence
+          # of a VNet. Those get suppressed with a reason once reviewed.
+          soft_fail: true
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      - name: upload findings
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+          category: checkov
+
+  trivy:
+    name: image scan
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [web, api]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Built rather than pulled, so a pull request is scanned before its
+      # image is ever published.
+      - name: build
+        run: docker build -t scan-target:${{ matrix.image }} ./app/${{ matrix.image }}
+
+      - name: scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: scan-target:${{ matrix.image }}
+          format: sarif
+          output: trivy-${{ matrix.image }}.sarif
+          severity: HIGH,CRITICAL
+          # Reporting only for now. The base images carry findings this project
+          # does not control, and the useful first step is seeing how many.
+          exit-code: 0
+
+      - name: upload findings
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-${{ matrix.image }}.sarif
+          category: trivy-${{ matrix.image }}
