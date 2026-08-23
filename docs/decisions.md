@@ -78,3 +78,21 @@ The pipeline's identity and every role assignment it holds live in the bootstrap
 Image tags are immutable, so the build skips any tag already in the registry. That is correct, but it means changing application code without bumping the tag deploys the old image. The first pipeline run did exactly that and shipped a web image older than the change it was meant to carry. The build now fails and names the variable to bump.
 
 **Alternative:** Tag every build with the commit hash, which removes the failure entirely but also removes readable release numbers. Or rebuild and overwrite the tag, which abandons immutability and makes a deployed version unidentifiable.
+
+## Why keep more than one version of the app alive?
+
+Only one version can be live at a time in the default mode, so undoing a bad release means deploying the old one again and waiting for it to start. Keeping the previous version running means rolling back is just moving traffic back to it, which takes seconds instead of minutes.
+
+**Alternative:** Redeploy the previous version when something goes wrong. Simpler, and no old versions sitting around, but the site stays broken for as long as the deployment takes.
+
+## Why do revision names include a hash?
+
+A revision name should say which release it is running. Naming it after the version alone looked right, but it only produces a new name when the image changes, and most changes are configuration. Azure will not reuse an existing name, so it quietly fell back to numbering them. Adding a short hash of the settings keeps every revision distinct while the version stays readable at the front.
+
+**Alternative:** Accept the generated names, which are unique but tell you nothing. Or bump the version for configuration changes, which would make version numbers meaningless.
+
+## Why is this platform not connected to the hub and spoke network project?
+
+The two are built to live differently. This platform is meant to stay reachable, scale to zero, and cost almost nothing. The network lab is meant to be destroyed after each session, because a VPN gateway and firewall are expensive to leave running. Joining them forces a choice between a site that disappears and a lab that bills around the clock. They are also in different regions, and a Container Apps environment has to share a region with its subnet.
+
+**Alternative:** Rebuild this platform in the network project's region and attach it to the spoke. That means private networking here, at the cost of scale to zero, a continuously billed environment, and a live site that depends on another project's state. Private networking is already demonstrated in that project, so the gap is in this repository rather than in the work overall.

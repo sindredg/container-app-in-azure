@@ -64,15 +64,17 @@ flowchart TB
 | Remote Terraform state | Deployed |
 | Public web Container App | Deployed |
 | Routing and response hardening | Deployed |
+| API authentication and upstream TLS | Deployed |
 | Network-level request logging | Deployed |
 | Internal API Container App | Deployed |
 | Same-origin proxy from web to API | Deployed |
+| Multiple revisions with traffic-weight rollback | Deployed |
+| Scaling above one replica | Deployed |
+| Automated delivery with federated credentials | Deployed |
 | Operational validation | In progress |
 | Per-app identities with repository conditions | Next |
-| Scaling above one replica | Planned |
 | Azure SQL Database with Entra authentication | Planned |
-| Automated delivery with federated credentials | Planned |
-| VNet-integrated environment | Potential |
+| VNet-integrated environment | Not pursued, see decisions |
 | Private endpoints for registry, state, and database | Potential |
 | Container image scanning | Potential |
 | Microsoft Sentinel detection rules | Potential |
@@ -86,7 +88,7 @@ flowchart TB
 
 **Database:** *(potential)* Azure SQL Database, connected to by the API using its managed identity rather than a password in a connection string. It gives the application something real to hold: which revisions have served traffic, and when the platform last scaled up from zero.
 
-**Container Apps environment** — the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
+**Container Apps environment** is the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
 
 **Container Registry:** private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
 
