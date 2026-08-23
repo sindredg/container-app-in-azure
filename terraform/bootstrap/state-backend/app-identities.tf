@@ -1,5 +1,4 @@
-# These serve the apps in the platform resource group, so they do not carry
-# the state infrastructure tags used elsewhere in this root.
+# Tagged for the platform, not for the state infrastructure around them.
 locals {
   app_pull_tags = {
     environment = "dev"
