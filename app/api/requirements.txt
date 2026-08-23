@@ -1,2 +1,7 @@
-fastapi==0.115.6
-uvicorn==0.34.0
+fastapi==0.141.1
+uvicorn==0.52.4
+
+# Pinned directly rather than left to FastAPI. Starlette is the layer that
+# handles the request, it carried the CVEs the image scan found, and pinning
+# it here makes the security-relevant version visible in review.
+starlette==1.6.0
