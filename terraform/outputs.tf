@@ -1,49 +1,49 @@
 output "resource_group_name" {
   description = "Name of the Azure resource group."
-  value       = azurerm_resource_group.main.name
+  value       = module.platform.resource_group_name
 }
 
 output "container_app_environment_name" {
   description = "Name of the shared Container Apps environment."
-  value       = azurerm_container_app_environment.main.name
+  value       = module.platform.container_app_environment_name
 }
 
 output "container_app_environment_default_domain" {
   description = "Default domain assigned to the Container Apps environment."
-  value       = azurerm_container_app_environment.main.default_domain
+  value       = module.platform.container_app_environment_default_domain
 }
 
 output "container_registry_name" {
   description = "Name of the Azure Container Registry."
-  value       = azurerm_container_registry.main.name
+  value       = module.registry.registry_name
 }
 
 output "container_registry_login_server" {
   description = "Login server used in container image addresses."
-  value       = azurerm_container_registry.main.login_server
+  value       = module.registry.login_server
 }
 
 output "container_pull_identity_id" {
   description = "Resource ID of the managed identity used for image pulls."
-  value       = azurerm_user_assigned_identity.container_pull.id
+  value       = module.registry.identity_id
 }
 
 output "web_container_app_name" {
   description = "Name of the public web Container App."
-  value       = azurerm_container_app.web.name
+  value       = module.web_app.name
 }
 
 output "web_container_app_url" {
   description = "Public HTTPS URL of the web Container App."
-  value       = "https://${azurerm_container_app.web.ingress[0].fqdn}"
+  value       = module.web_app.url
 }
 
 output "api_container_app_name" {
   description = "Name of the internal API Container App."
-  value       = azurerm_container_app.api.name
+  value       = module.api_app.name
 }
 
 output "api_container_app_internal_fqdn" {
   description = "Internal FQDN of the API Container App. Resolvable only inside the Container Apps environment."
-  value       = azurerm_container_app.api.ingress[0].fqdn
+  value       = module.api_app.internal_fqdn
 }
