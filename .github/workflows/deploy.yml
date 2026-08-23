@@ -16,6 +16,13 @@ permissions:
   id-token: write
   contents: read
 
+# Terraform locks state during an operation, so two runs racing means one
+# dies on the lock. Queue them instead. Never cancel in progress: killing a
+# running apply is how a state lease gets orphaned.
+concurrency:
+  group: terraform-state
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -49,8 +56,23 @@ jobs:
         id: tags
         working-directory: terraform
         run: |
-          web=$(echo "var.web_image_tag" | terraform console -no-color | tr -d '"')
-          api=$(echo "var.api_image_tag" | terraform console -no-color | tr -d '"')
+          # terraform console writes diagnostics to stdout alongside the
+          # result, so capturing everything picks up warnings too. The value
+          # is the last line that looks like a quoted string. Anything else
+          # is a failure rather than something to pass downstream.
+          read_var() {
+            echo "var.$1" | terraform console -no-color \n              | grep -E '^"[^"]+"$' | tail -1 | tr -d '"'
+          }
+
+          web=$(read_var web_image_tag)
+          api=$(read_var api_image_tag)
+
+          for v in "$web" "$api"; do
+            if ! echo "$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::could not read a version from terraform console, got: $v"
+              exit 1
+            fi
+          done
           echo "web=$web" >> "$GITHUB_OUTPUT"
           echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "web:$web api:$api"
