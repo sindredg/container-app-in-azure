@@ -20,6 +20,8 @@ Each phase page is a summary: goal, what was completed, what was validated, and 
 | [10. Internal API Container App](phases/phase-10-internal-api-container-app.md) | API deployed behind internal ingress, reached through the public site. |
 | [11. API authentication and upstream TLS](phases/phase-11-api-authentication-and-upstream-tls.md) | Shared secret between proxy and API, verified upstream certificate, schema closed. |
 | [12. GitHub Actions pipeline](phases/phase-12-github-actions-pipeline.md) | Plan on every pull request, gated deploy with build, apply, and smoke test. |
+| [13. Scaling and release mechanics](phases/phase-13-scaling-and-release-mechanics.md) | Scale test to five replicas, and rollback by traffic weight. |
+| [13. Scaling and release mechanics](phases/phase-13-scaling-and-release-mechanics.md) | Scale test to five replicas, and rollback by traffic weight. |
 
 ## Worklog
 
@@ -39,11 +41,10 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 | 10 | [Internal API Container App](worklog/phase-10-internal-api-container-app.md) |
 | 11 | [API authentication and upstream TLS](worklog/phase-11-api-authentication-and-upstream-tls.md) |
 | 12 | [GitHub Actions pipeline](worklog/phase-12-github-actions-pipeline.md) |
-| 11 | [API authentication and upstream TLS](worklog/phase-11-api-authentication-and-upstream-tls.md) |
-| 12 | [GitHub Actions pipeline](worklog/phase-12-github-actions-pipeline.md) |
+| 13 | [Scaling and release mechanics](worklog/phase-13-scaling-and-release-mechanics.md) |
 
 ## Supporting logs
 
-- [Decision log](decisions.md) — every significant choice, with the alternative that was rejected
-- [Troubleshooting log](troubleshooting.md) — what broke, why, and what fixed it
-- [Validation and testing](validation-testing/README.md) — operational tests against the deployed platform
+- [Decision log](decisions.md) lists every significant choice, with the alternative that was rejected
+- [Troubleshooting log](troubleshooting.md) records what broke, why, and what fixed it
+- [Validation and testing](validation-testing/README.md) covers operational tests against the deployed platform
