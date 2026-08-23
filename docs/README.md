@@ -21,7 +21,8 @@ Each phase page is a summary: goal, what was completed, what was validated, and 
 | [11. API authentication and upstream TLS](phases/phase-11-api-authentication-and-upstream-tls.md) | Shared secret between proxy and API, verified upstream certificate, schema closed. |
 | [12. GitHub Actions pipeline](phases/phase-12-github-actions-pipeline.md) | Plan on every pull request, gated deploy with build, apply, and smoke test. |
 | [13. Scaling and release mechanics](phases/phase-13-scaling-and-release-mechanics.md) | Scale test to five replicas, and rollback by traffic weight. |
-| [13. Scaling and release mechanics](phases/phase-13-scaling-and-release-mechanics.md) | Scale test to five replicas, and rollback by traffic weight. |
+| [14. Supply chain scanning](phases/phase-14-supply-chain-scanning.md) | Image and Terraform scanning on every pull request, dependencies brought current. |
+| [15. Terraform module migration](phases/phase-15-terraform-module-migration.md) | Configuration split into modules, provider upgraded to 5.x. |
 
 ## Worklog
 
@@ -42,6 +43,8 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 | 11 | [API authentication and upstream TLS](worklog/phase-11-api-authentication-and-upstream-tls.md) |
 | 12 | [GitHub Actions pipeline](worklog/phase-12-github-actions-pipeline.md) |
 | 13 | [Scaling and release mechanics](worklog/phase-13-scaling-and-release-mechanics.md) |
+| 14 | [Supply chain scanning](worklog/phase-14-supply-chain-scanning.md) |
+| 15 | [Terraform module migration](worklog/phase-15-terraform-module-migration.md) |
 
 ## Supporting logs
 
