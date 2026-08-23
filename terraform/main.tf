@@ -16,6 +16,14 @@ resource "random_password" "api_shared_secret" {
   special = false
 }
 
+# Created by the bootstrap root, which a human applies, so they are read rather than managed here.
+data "azurerm_user_assigned_identity" "app_pull" {
+  for_each = toset(["web", "api"])
+
+  name                = "id-${local.project_name}-${each.key}-pull-${var.environment}"
+  resource_group_name = module.platform.resource_group_name
+}
+
 module "platform" {
   source = "./modules/platform"
 
@@ -42,14 +50,12 @@ module "api_app" {
   name                         = "ca-${local.project_name}-api-${var.environment}"
   container_app_environment_id = module.platform.container_app_environment_id
   resource_group_name          = module.platform.resource_group_name
-  identity_id                  = module.registry.identity_id
+  identity_id                  = data.azurerm_user_assigned_identity.app_pull["api"].id
   registry_login_server        = module.registry.login_server
   image_tag                    = var.api_image_tag
   shared_secret                = random_password.api_shared_secret.result
   tags                         = merge(local.common_tags, { component = "api" })
 
-  # Registry read access must exist before the first private pull.
-  depends_on = [module.registry]
 }
 
 module "web_app" {
@@ -58,7 +64,7 @@ module "web_app" {
   name                         = "ca-${local.project_name}-web-${var.environment}"
   container_app_environment_id = module.platform.container_app_environment_id
   resource_group_name          = module.platform.resource_group_name
-  identity_id                  = module.registry.identity_id
+  identity_id                  = data.azurerm_user_assigned_identity.app_pull["web"].id
   registry_login_server        = module.registry.login_server
   image_tag                    = var.web_image_tag
   api_fqdn                     = module.api_app.internal_fqdn
@@ -69,5 +75,4 @@ module "web_app" {
   previous_revision_suffix     = var.web_previous_revision_suffix
   tags                         = merge(local.common_tags, { component = "web" })
 
-  depends_on = [module.registry]
 }
