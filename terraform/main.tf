@@ -8,20 +8,11 @@ locals {
   }
 }
 
-# The shared secret both applications hold. It lives at the root rather than
-# inside either module, because it belongs to neither one alone.
-#
-# Generated rather than authored, so no human ever handles the value and it
-# never appears in Git. It lives in Terraform state, which is already private,
-# Entra authenticated, versioned, and soft deleted.
-#
-# Rotating it means tainting this resource and applying. Both apps read the
-# same value, so they move together in one apply.
+# Shared secret for both apps, generated so no human handles it and it never reaches Git.
 resource "random_password" "api_shared_secret" {
   length = 48
 
-  # letters and digits only. The value is interpolated into an Nginx config
-  # by envsubst, where quoting rules would make punctuation a hazard.
+  # Letters and digits only, since envsubst interpolates this into Nginx config.
   special = false
 }
 

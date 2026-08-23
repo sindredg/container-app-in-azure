@@ -18,11 +18,9 @@ The complete design. The status table above tracks how much of it exists so far.
 flowchart TB
     U["Internet client"]
 
-    subgraph VNET["Virtual network"]
-        subgraph CAE["Container Apps environment"]
-            WEB["Public web Container App<br/>Nginx, external HTTPS ingress"]
-            API["Internal API Container App<br/>internal ingress only"]
-        end
+    subgraph CAE["Container Apps environment"]
+        WEB["Public web Container App<br/>Nginx, external HTTPS ingress"]
+        API["Internal API Container App<br/>internal ingress only"]
     end
 
     SQL["Azure SQL Database"]
@@ -50,7 +48,14 @@ flowchart TB
     TF -->|"manages infrastructure"| SQL
     TF -->|"remote state and locking"| ST
     GHA -->|"plan and apply"| TF
+
+    classDef planned stroke-dasharray: 6 4
+    class SQL,SENT planned
 ```
+
+Dashed boxes are planned. Everything else is deployed.
+
+Private networking was evaluated and not pursued: it requires rebuilding the environment, bills continuously, and would end the scale-to-zero behaviour this platform relies on. The reasoning is in the [decision log](docs/decisions.md).
 
 ## Current status
 
@@ -73,14 +78,13 @@ flowchart TB
 | Automated delivery with federated credentials | Deployed |
 | Image and Terraform scanning | Deployed |
 | Terraform split into modules | Deployed |
-| Operational validation | In progress |
-| Per-app identities with repository conditions | Next |
+| Scale, rollback, and recovery tested | Deployed |
+| Per-app identities with repository conditions | In progress |
 | Azure SQL Database with Entra authentication | Planned |
 | VNet-integrated environment | Not pursued, see decisions |
 | Private endpoints for registry, state, and database | Potential |
-| Container image scanning | Potential |
 | Microsoft Sentinel detection rules | Potential |
-| Scaling and recovery tests | Potential |
+| Second environment for promotion | Potential |
 
 ## How it fits together
 

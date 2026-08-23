@@ -1,5 +1,5 @@
 locals {
-  # Only the values that produce a new revision when they change.
+  # Only the values that should produce a new revision when they change.
   config_hash = substr(sha1(jsonencode({
     image      = var.image_tag
     max        = var.max_replicas
@@ -7,9 +7,6 @@ locals {
     upstream   = var.api_fqdn
   })), 0, 6)
 }
-
-# The only public entry point. It serves the site and proxies /api/ to the
-# internal API, so the browser never learns the API address.
 
 resource "azurerm_container_app" "web" {
   name                         = var.name
@@ -41,9 +38,7 @@ resource "azurerm_container_app" "web" {
     target_port                = 8080
     transport                  = "auto"
 
-    # Normal state is one block sending everything to the newest revision.
-    # Setting previous_revision_suffix adds a second block, which is how a
-    # split, a promotion, and a rollback are all expressed as one variable change.
+    # Setting previous_revision_suffix adds a second weight, which is how a split and a rollback are expressed.
     dynamic "traffic_weight" {
       for_each = var.previous_revision_suffix == "" ? [] : [1]
 
@@ -60,15 +55,7 @@ resource "azurerm_container_app" "web" {
   }
 
   template {
-    # Azure generates a random suffix unless given one. Deriving it from the
-    # image tag means a revision name says which release it is running.
-    # Dots are not valid in a revision name, so 0.3.0 becomes 0-3-0.
-    #
-    # The tag alone is not enough. A config change that does not touch the
-    # image reuses the tag, and Azure cannot create a second revision with a
-    # name that already exists, so it silently falls back to auto numbering.
-    # Appending a hash of the settings that define a revision keeps the name
-    # unique per configuration while the version stays readable.
+    # Version plus a config hash, because the tag alone repeats when only configuration changes.
     revision_suffix = "${replace(var.image_tag, ".", "-")}-${local.config_hash}"
 
     min_replicas = 0
@@ -77,8 +64,6 @@ resource "azurerm_container_app" "web" {
     http_scale_rule {
       name = "http-requests"
 
-      # Azure adds a replica when average concurrent requests per replica
-      # exceeds this. Lower it to make scaling visible in a short test.
       concurrent_requests = var.concurrent_requests
     }
 
