@@ -61,7 +61,7 @@ jobs:
           # is the last line that looks like a quoted string. Anything else
           # is a failure rather than something to pass downstream.
           read_var() {
-            echo "var.$1" | terraform console -no-color \n              | grep -E '^"[^"]+"$' | tail -1 | tr -d '"'
+            echo "var.$1" | terraform console -no-color | grep -E '^"[^"]+"$' | tail -1 | tr -d '"'
           }
 
           web=$(read_var web_image_tag)
