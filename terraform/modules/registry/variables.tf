@@ -3,22 +3,17 @@ variable "registry_name" {
   type        = string
 }
 
-variable "identity_name" {
-  description = "Name of the shared pull identity."
-  type        = string
-}
-
 variable "resource_group_name" {
-  description = "Resource group holding the registry and identity."
+  description = "Resource group holding the registry."
   type        = string
 }
 
 variable "location" {
-  description = "Azure region for the registry and identity."
+  description = "Azure region for the registry."
   type        = string
 }
 
 variable "tags" {
-  description = "Tags applied to every resource in this module."
+  description = "Tags applied to the registry."
   type        = map(string)
 }
