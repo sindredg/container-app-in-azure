@@ -96,3 +96,23 @@ A revision name should say which release it is running. Naming it after the vers
 The two are built to live differently. This platform is meant to stay reachable, scale to zero, and cost almost nothing. The network lab is meant to be destroyed after each session, because a VPN gateway and firewall are expensive to leave running. Joining them forces a choice between a site that disappears and a lab that bills around the clock. They are also in different regions, and a Container Apps environment has to share a region with its subnet.
 
 **Alternative:** Rebuild this platform in the network project's region and attach it to the spoke. That means private networking here, at the cost of scale to zero, a continuously billed environment, and a live site that depends on another project's state. Private networking is already demonstrated in that project, so the gap is in this repository rather than in the work overall.
+
+## Why do the scanners report instead of blocking?
+
+Only the Terraform linter fails a pull request, because it catches configuration errors rather than opinions. The security scanners report into the Security tab instead.
+
+The first scan returned 100 findings. Seven were in a dependency this project chose. The other ninety three came from the base image, and all three criticals were Perl vulnerabilities in a Python image that never runs Perl. Blocking on severity would have stopped the pipeline on day one for something nobody could fix.
+
+**Alternative:** Fail on high severity immediately, which sounds stricter and in practice teaches people to disable the check. Reporting first shows the real volume, so enforcement can be set where it will actually be obeyed.
+
+## Why is Terraform split into modules?
+
+The configuration is grouped by capability: platform, registry, and one module per application. It matches the layout used in the networking project, and it makes a second environment a matter of calling the same modules with different inputs.
+
+**Alternative:** Keep it flat, which is perfectly readable at this size and needs no migration. Or write one generic application module used twice, which repeats less code but needs a dozen optional settings to describe how the two apps differ, so every reader has to hold both cases in their head.
+
+## Why do deployment runs queue instead of running in parallel?
+
+Terraform locks its state while it works, so two runs at once means one fails on the lock for a reason that has nothing to do with its own change. That is how people learn to ignore red builds.
+
+**Alternative:** Cancel the older run so the newest wins, which is the usual instinct. It is the wrong answer here, because cancelling a run mid-apply is exactly how this project once left a lock stranded and needed manual recovery.
