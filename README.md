@@ -71,6 +71,8 @@ flowchart TB
 | Multiple revisions with traffic-weight rollback | Deployed |
 | Scaling above one replica | Deployed |
 | Automated delivery with federated credentials | Deployed |
+| Image and Terraform scanning | Deployed |
+| Terraform split into modules | Deployed |
 | Operational validation | In progress |
 | Per-app identities with repository conditions | Next |
 | Azure SQL Database with Entra authentication | Planned |

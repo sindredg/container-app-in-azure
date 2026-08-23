@@ -87,3 +87,41 @@
 **Fix:** Fail the build when a service's source changed in the push but its tag is already published, and name the variable to bump.
 
 ![The smoke test catches the mismatched image](images/phase-12-smoke-test-catches-stale-image.png)
+
+## Provider upgrade left state the new schema could not read
+
+**Symptom:** After upgrading the Azure provider, a pipeline step failed with `unsupported attribute "trust_policy_enabled"`, while `terraform plan` reported no changes.
+
+**Cause:** State written by the previous provider held an attribute the new version removed. Plan tolerated it because plan refreshes each resource from Azure. The failing step read state directly without refreshing.
+
+**Fix:** `terraform apply -refresh-only`, which updates state from real infrastructure and changes nothing.
+
+![The state could not be decoded under the new provider](images/phase-15-state-decode-error.png)
+
+## Two workflow runs collided on the state lock
+
+**Symptom:** A plan failed with `state blob is already locked`, naming an apply on another runner.
+
+**Cause:** Nothing prevented two workflow runs at once. Terraform locks state for the duration of an operation, so the second could not proceed. The lock worked correctly; the pipeline allowed the collision.
+
+**Fix:** Both workflows share a concurrency group so runs queue. Cancelling in progress is deliberately disabled, because cancelling an apply is how a lock gets stranded.
+
+![Two runs collided on the state lock](images/phase-15-state-lock-collision.png)
+
+## A line continuation became a literal backslash-n
+
+**Symptom:** `terraform console` failed with `Too many command line arguments`.
+
+**Cause:** A shell command written across two lines received a literal backslash followed by the letter n instead of a line break, so bash passed it and everything after it as arguments.
+
+**Fix:** Put the command on one line. A guard added in the same change caught the empty result and failed the step clearly rather than deploying an empty image tag.
+
+![The console command rejected its arguments](images/phase-15-console-argument-error.png)
+
+## A fix pushed to a merged branch never reached main
+
+**Symptom:** The push succeeded, nothing reported an error, and the pipeline on `main` stayed broken.
+
+**Cause:** Pushing to a branch updates the branch. It does not reopen a merged pull request and it does not move `main`, so the commit sat where nothing would merge it again.
+
+**Fix:** Branch from current `main`, apply the fix there, open a new pull request. After pushing to an existing branch, check that its pull request is still open.
