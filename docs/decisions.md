@@ -116,3 +116,17 @@ The configuration is grouped by capability: platform, registry, and one module p
 Terraform locks its state while it works, so two runs at once means one fails on the lock for a reason that has nothing to do with its own change. That is how people learn to ignore red builds.
 
 **Alternative:** Cancel the older run so the newest wins, which is the usual instinct. It is the wrong answer here, because cancelling a run mid-apply is exactly how this project once left a lock stranded and needed manual recovery.
+
+## Why does each app have its own registry identity?
+
+Both applications used to share one identity that could read every repository. Compromising either container granted the same access, and the audit trail could not say which application pulled what. Each now has its own, restricted by a condition to the single repository it runs.
+
+**Alternative:** Keep one identity, which is simpler and was the position for most of this project. Splitting them without adding conditions would fix attribution but not access, because a role assigned without a condition applies to the whole registry.
+
+## Why can the pipeline not create permissions?
+
+The pipeline holds Contributor, which deliberately excludes managing role assignments. So identities and their grants live in the configuration a human applies, and the pipeline only reads them.
+
+The pipeline can already delete the registry and both applications, so this is not about limiting the damage it can do. Destruction is loud and rebuilt from code in minutes. A quietly granted permission persists and nobody notices.
+
+**Alternative:** Give the pipeline permission to manage role assignments on the registry. One line, and it could then change who has access to anything, including granting itself more. The cost of not doing it is that some changes need a person and cannot deploy unattended.

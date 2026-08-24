@@ -23,6 +23,7 @@ Each phase page is a summary: goal, what was completed, what was validated, and 
 | [13. Scaling and release mechanics](phases/phase-13-scaling-and-release-mechanics.md) | Scale test to five replicas, and rollback by traffic weight. |
 | [14. Supply chain scanning](phases/phase-14-supply-chain-scanning.md) | Image and Terraform scanning on every pull request, dependencies brought current. |
 | [15. Terraform module migration](phases/phase-15-terraform-module-migration.md) | Configuration split into modules, provider upgraded to 5.x. |
+| [16. Per-app pull identities](phases/phase-16-per-app-pull-identities.md) | One registry identity per app, each scoped to a single repository. |
 
 ## Worklog
 
@@ -45,6 +46,7 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 | 13 | [Scaling and release mechanics](worklog/phase-13-scaling-and-release-mechanics.md) |
 | 14 | [Supply chain scanning](worklog/phase-14-supply-chain-scanning.md) |
 | 15 | [Terraform module migration](worklog/phase-15-terraform-module-migration.md) |
+| 16 | [Per-app pull identities](worklog/phase-16-per-app-pull-identities.md) |
 
 ## Supporting logs
 

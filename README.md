@@ -79,7 +79,7 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 | Image and Terraform scanning | Deployed |
 | Terraform split into modules | Deployed |
 | Scale, rollback, and recovery tested | Deployed |
-| Per-app identities with repository conditions | In progress |
+| Per-app identities with repository conditions | Deployed |
 | Azure SQL Database with Entra authentication | Planned |
 | VNet-integrated environment | Not pursued, see decisions |
 | Private endpoints for registry, state, and database | Potential |
