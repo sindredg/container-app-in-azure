@@ -22,3 +22,8 @@ output "container_app_environment_default_domain" {
   description = "Default domain assigned to the Container Apps environment."
   value       = azurerm_container_app_environment.main.default_domain
 }
+
+output "log_analytics_workspace_id" {
+  description = "Resource ID of the Log Analytics workspace."
+  value       = azurerm_log_analytics_workspace.main.id
+}
