@@ -69,6 +69,14 @@ jobs:
             const fs = require("fs");
             let plan = fs.readFileSync("terraform/plan.txt", "utf8");
 
+            // Every resource ID carries the subscription ID, and this repository
+            // is public. Actions masks the secret in job logs, but a comment is
+            // posted through the API, where masking does not reach.
+            plan = plan.replace(
+              /\/subscriptions\/[0-9a-fA-F-]{36}/g,
+              "/subscriptions/<redacted>",
+            );
+
             // A comment body is capped at 65536 characters.
             const limit = 60000;
             if (plan.length > limit) {
