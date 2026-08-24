@@ -4,7 +4,7 @@
 
 Build the private image supply path before any image exists: a registry with administrator credentials disabled, a user-assigned managed identity, and a read-only role assignment scoped to that registry.
 
-Related: [store images in private ACR and keep runtime access read-only](../decisions.md).
+Background: [DEC-017](../decisions.md) and [DEC-018](../decisions.md) cover ABAC repository permissions and the Basic tier without admin credentials.
 
 ## What was done
 
@@ -17,11 +17,11 @@ terraform apply plans/acr-and-pull-identity.tfplan
 
 ![Terraform applies the registry, identity, and role assignment](../images/phase-04-acr-apply-complete.png)
 
-Proves the apply added exactly 3 resources and returned the registry login server and pull identity outputs.
+The apply added exactly 3 resources and returned the registry login server and pull identity outputs.
 
 ![Terraform state contains six managed Azure resources](../images/phase-04-terraform-state-six-resources.png)
 
-Proves state now holds the resource group, workspace, environment, registry, identity, and role assignment.
+State now holds the resource group, workspace, environment, registry, identity, and role assignment.
 
 ## Registry configuration
 
@@ -29,7 +29,7 @@ Proves state now holds the resource group, workspace, environment, registry, ide
 
 ![ACR uses Basic SKU, disabled admin credentials, and ABAC permissions](../images/phase-04-acr-security.png)
 
-Proves `AdminEnabled` is `False` and `RoleMode` is `AbacRepositoryPermissions` on the live registry, not just in configuration.
+`AdminEnabled` is `False` and `RoleMode` is `AbacRepositoryPermissions` on the live registry, not just in configuration.
 
 ## Pull identity
 
@@ -37,16 +37,16 @@ Proves `AdminEnabled` is `False` and `RoleMode` is `AbacRepositoryPermissions` o
 
 ![The managed identity holds the repository reader role](../images/phase-04-repository-reader-role.png)
 
-Proves the identity's only assignment is read-only, so the running application cannot push or delete images.
+The identity's only assignment is read-only, so the running application cannot push or delete images.
 
 ## Review
 
 ![Four Terraform source files staged for review](../images/phase-04-staged-terraform-files.png)
 
-Proves only source files were staged, with generated plans and state excluded.
+Only source files were staged, with generated plans and state excluded.
 
 ![Azure platform resources in the development resource group](../images/phase-04-platform-resources-portal.png)
 
-Proves the registry, environment, managed identity, and workspace all exist in `rg-container-scale-lab-dev` in Norway East.
+The registry, environment, managed identity, and workspace all exist in `rg-container-scale-lab-dev` in Norway East.
 
 This phase created storage and authorisation for images only. Nothing was built, pushed, or deployed.

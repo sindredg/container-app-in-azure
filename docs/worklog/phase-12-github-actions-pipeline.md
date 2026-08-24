@@ -14,29 +14,29 @@ Permissions are Contributor scoped to the dev resource group, Storage Blob Data 
 
 ![Terraform plans the CI identity and its grants](../images/phase-12-bootstrap-plan-six-resources.png)
 
-Proves the change is 6 resources: the identity, two federated credentials, and three role assignments.
+The change is 6 resources: the identity, two federated credentials, and three role assignments.
 
 ![The deprecated argument warning](../images/phase-12-deprecated-argument-warning.png)
 
-Proves `resource_group_name` on `azurerm_federated_identity_credential` is no longer used. The identity already carries the resource group through the parent reference. Removing it cleared the warning without changing the plan. `parent_id` was also renamed to `user_assigned_identity_id`, which the 4.x provider already accepts and version 5 requires.
+`resource_group_name` on `azurerm_federated_identity_credential` is no longer used. The identity already carries the resource group through the parent reference. Removing it cleared the warning without changing the plan. `parent_id` was also renamed to `user_assigned_identity_id`, which the 4.x provider already accepts and version 5 requires.
 
 ![The bootstrap apply completes](../images/phase-12-bootstrap-apply-complete.png)
 
-Proves all 6 resources were created.
+All 6 resources were created.
 
 ## GitHub configuration
 
 ![The dev environment requires a reviewer](../images/phase-12-environment-approval-gate.png)
 
-Proves the approval gate exists. The apply job targets this environment, so a run waits for a human before touching Azure.
+The approval gate exists. The apply job targets this environment, so a run waits for a human before touching Azure.
 
 ![Client, tenant, and registry names are repository variables](../images/phase-12-repository-variables.png)
 
-Proves the identifiers are stored as variables. A client ID and tenant ID name things, they do not authenticate anything on their own.
+The identifiers are stored as variables. A client ID and tenant ID name things, they do not authenticate anything on their own.
 
 ![Only the subscription ID is a secret](../images/phase-12-repository-secret.png)
 
-Proves the split. There is no client secret to store, which is the point of federated credentials.
+The split. There is no client secret to store, which is the point of federated credentials.
 
 ## The OIDC subject failure
 
@@ -44,7 +44,7 @@ The first run failed at login.
 
 ![No matching federated identity record](../images/phase-12-oidc-subject-mismatch.png)
 
-Proves the presented subject was `repo:sindredg@186042440/container-app-in-azure@1332416382:environment:dev`, and no credential matched it.
+The presented subject was `repo:sindredg@186042440/container-app-in-azure@1332416382:environment:dev`, and no credential matched it.
 
 Two separate faults, either of which alone would have failed.
 
@@ -56,7 +56,7 @@ The subject prefix is now built once in a local from variables, so the two crede
 
 ![The corrected credentials apply](../images/phase-12-credential-fix-applied.png)
 
-Proves the fix landed: 1 added, 1 changed, 1 destroyed. The new environment credential, the corrected pull request subject, and the dead ref credential removed.
+The fix landed: 1 added, 1 changed, 1 destroyed. The new environment credential, the corrected pull request subject, and the dead ref credential removed.
 
 Full write-up in the [troubleshooting log](../troubleshooting.md).
 
@@ -66,7 +66,7 @@ Login, build, and apply then all passed, and the smoke test failed.
 
 ![The smoke test catches a stale image](../images/phase-12-smoke-test-catches-stale-image.png)
 
-Proves the site returned 200 and `/api/status` returned 401. The API enforced the shared secret. The web image did not send it.
+The site returned 200 and `/api/status` returned 401. The API enforced the shared secret. The web image did not send it.
 
 The cause was the build step. Tags are immutable, so an existing tag is never rebuilt. Nothing checked whether the source had moved on without its tag moving with it. Phase 11 changed both applications and bumped neither version, so both builds were skipped and the deployment shipped images that did not match the commit.
 
@@ -80,10 +80,10 @@ The build step now fails when a service's source changed in the push but its tag
 
 ![The pipeline runs green](../images/phase-12-pipeline-green.png)
 
-Proves the full path: login, init, read tags, registry login, build and push, apply, smoke test. 2 minutes 47 seconds end to end.
+The full path: login, init, read tags, registry login, build and push, apply, smoke test. 2 minutes 47 seconds end to end.
 
 The release loop is now one action. Bump the tag in `variables.tf`, open a pull request, merge. Everything else follows.
 
 ## Open
 
-ACR does not enforce tag immutability by default, and `api:0.1.0` was overwritten during this phase. Whether that is worth turning on is an open question, deliberately left until there is evidence from normal pipeline runs rather than a single unexplained timestamp.
+ACR does not enforce tag immutability by default, and `api:0.1.0` was overwritten during this phase. Left open until normal pipeline runs give evidence, rather than acting on one unexplained timestamp.
