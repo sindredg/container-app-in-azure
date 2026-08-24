@@ -134,7 +134,6 @@ jobs:
         working-directory: terraform
         env:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          TF_VAR_sql_admin_object_id: ${{ secrets.SQL_ADMIN_OBJECT_ID }}
         run: terraform apply -input=false -auto-approve
 
       # Proves the deployment serves traffic before the run is called green.

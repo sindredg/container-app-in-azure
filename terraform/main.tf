@@ -57,22 +57,6 @@ module "api_app" {
 
 }
 
-module "database" {
-  source = "./modules/database"
-
-  server_name         = "sql-${local.project_name}-${var.sql_location}-${var.environment}"
-  database_name       = "sqldb-${local.project_name}-${var.environment}"
-  resource_group_name = module.platform.resource_group_name
-  location            = var.sql_location
-
-  admin_object_id  = var.sql_admin_object_id
-  admin_login_name = var.sql_admin_login_name
-
-  log_analytics_workspace_id = module.platform.log_analytics_workspace_id
-
-  tags = merge(local.common_tags, { component = "database" })
-}
-
 module "web_app" {
   source = "./modules/web-app"
 
