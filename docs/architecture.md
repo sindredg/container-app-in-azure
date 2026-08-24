@@ -149,7 +149,7 @@ Request logging happens at the network level rather than in application code. Az
 
 **Private networking.** VNet integration cannot be added to an existing Container Apps environment, so it means rebuilding the environment and moving both apps. It also bills continuously and ends the scale to zero behaviour the platform relies on. Evaluated and deferred on cost and effort, not judged unnecessary.
 
-**A database.** One was built and removed, because nothing connected to it. See [phase 17](worklog/phase-17-sql-database-built-and-removed.md).
+**A database.** Neither application holds state, so none is deployed.
 
 **Microsoft Sentinel.** Detection rules on top of the workspace remain a potential addition.
 

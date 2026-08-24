@@ -76,7 +76,6 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 | Terraform split into modules | Deployed |
 | Scale, rollback, and recovery tested | Deployed |
 | Per-app identities with repository conditions | Deployed |
-| Azure SQL Database with Entra authentication | Built, then removed |
 | Microsoft Sentinel detection rules | Potential |
 
 ## How it fits together
@@ -85,13 +84,11 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 
 **Internal API:** a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
 
-**Database:** built and removed. An Azure SQL database with Entra-only authentication was deployed and then taken out, because nothing connected to it and an unused public endpoint is attack surface without a purpose. The attempt is worth more than the resource was: it found a plan check that had been reporting success on failing plans since the pipeline was built, a firewall design that cannot work on a Consumption plan, and two Azure behaviours that only appear at apply time. That is written up in [phase 17](docs/worklog/phase-17-sql-database-built-and-removed.md).
-
 **Container Apps environment** is the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
 
 **Container Registry:** private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
 
-**Managed identity:** how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image. The database will authenticate the same way.
+**Managed identity:** how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image.
 
 **Log Analytics:** where both applications and the platform itself send logs. Application logs from each tier land alongside platform events like scaling and revision changes, so a single request can be followed across both services. The web tier records the client's `/24` network rather than their address; the API records no address at all.
 
@@ -148,6 +145,8 @@ Tracked as issues rather than left implicit:
 
 ```text
 container-app-in-azure/
+|-- .github/
+|   `-- workflows/
 |-- app/
 |   |-- api/
 |   `-- web/
@@ -155,16 +154,25 @@ container-app-in-azure/
 |   |-- images/
 |   |-- phases/
 |   |-- validation-testing/
-|   `-- worklog/
+|   |-- worklog/
+|   |-- architecture.md
+|   |-- decisions.md
+|   `-- troubleshooting.md
 |-- terraform/
+|   |-- bootstrap/
+|   `-- modules/
 |-- compose.yaml
 `-- README.md
 ```
+
+`.github/workflows/` holds the plan, security, and deploy pipelines. `terraform/bootstrap/` is the root a human applies, holding the state backend and everything that grants access.
 
 `compose.yaml` runs both containers locally, with the API publishing no ports so the local layout mirrors internal ingress.
 
 Terraform state and saved plan files are not committed to Git.
 
-## Next milestone
+## Project status
 
-Split the shared pull identity into one identity per app, scoped with ABAC repository conditions, so each service can pull only its own images.
+The lab is complete. Every deployed component in the diagram above is built, validated, and documented, and the platform runs unattended through the pipeline.
+
+Anything further would be an addition rather than a continuation, and would get its own phase, worklog entry, and decision record in the same way as the sixteen before it.
