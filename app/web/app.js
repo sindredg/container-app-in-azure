@@ -6,7 +6,7 @@
   "use strict";
 
   var DETAIL_FIELDS = ["version", "revision", "replica"];
-  var PLACEHOLDER = "—";
+  var PLACEHOLDER = "-";
 
   // The API scales to zero, so a cold start can take several seconds.
   var TIMEOUT_MS = 15000;
