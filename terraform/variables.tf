@@ -85,8 +85,9 @@ variable "sql_admin_object_id" {
 }
 
 variable "sql_admin_login_name" {
-  description = "Display name of the Entra SQL administrator."
+  description = "Label shown against the Entra SQL administrator in the portal. The object ID decides the actual identity."
   type        = string
+  default     = "cslab-sql-admin"
 }
 
 variable "sql_admin_ip_addresses" {
