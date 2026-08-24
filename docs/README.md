@@ -52,6 +52,7 @@ The phase pages say what happened. The worklog says how it went, step by step, w
 
 ## Supporting logs
 
+- [Architecture](architecture.md) breaks down the components, request path, boundaries, scaling, and delivery pipeline
 - [Decision log](decisions.md) lists every significant choice, with the alternative that was rejected
 - [Troubleshooting log](troubleshooting.md) records what broke, why, and what fixed it
 - [Validation and testing](validation-testing/README.md) covers operational tests against the deployed platform
