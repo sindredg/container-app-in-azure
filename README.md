@@ -23,7 +23,6 @@ flowchart TB
         API["Internal API Container App<br/>internal ingress only"]
     end
 
-    SQL["Azure SQL Database"]
     ACR["Private Azure Container Registry"]
     MI["User-assigned managed identities<br/>repository reader, one per app"]
     LAW["Log Analytics workspace"]
@@ -34,9 +33,7 @@ flowchart TB
 
     U -->|"HTTPS"| WEB
     WEB -->|"server-side proxy over internal ingress"| API
-    API -->|"passwordless connection"| SQL
     MI -.->|"authenticates the image pull"| ACR
-    MI -.->|"authenticates the database connection"| SQL
     ACR -->|"private image"| WEB
     ACR -->|"private image"| API
     WEB -->|"application logs"| LAW
@@ -45,12 +42,11 @@ flowchart TB
     LAW -->|"analytics rules"| SENT
     TF -->|"manages infrastructure"| CAE
     TF -->|"manages infrastructure"| ACR
-    TF -->|"manages infrastructure"| SQL
     TF -->|"remote state and locking"| ST
     GHA -->|"plan and apply"| TF
 
     classDef planned stroke-dasharray: 6 4
-    class SQL,SENT planned
+    class SENT planned
 ```
 
 Dashed boxes are planned. Everything else is deployed.
@@ -80,7 +76,7 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 | Terraform split into modules | Deployed |
 | Scale, rollback, and recovery tested | Deployed |
 | Per-app identities with repository conditions | Deployed |
-| Azure SQL Database with Entra authentication | Planned |
+| Azure SQL Database with Entra authentication | Built, then removed |
 | Microsoft Sentinel detection rules | Potential |
 
 ## How it fits together
@@ -89,7 +85,7 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 
 **Internal API:** a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
 
-**Database:** *(potential)* Azure SQL Database, connected to by the API using its managed identity rather than a password in a connection string. It gives the application something real to hold: which revisions have served traffic, and when the platform last scaled up from zero.
+**Database:** built and removed. An Azure SQL database with Entra-only authentication was deployed and then taken out, because nothing connected to it and an unused public endpoint is attack surface without a purpose. The attempt is worth more than the resource was: it found a plan check that had been reporting success on failing plans since the pipeline was built, a firewall design that cannot work on a Consumption plan, and two Azure behaviours that only appear at apply time. That is written up in [phase 17](docs/worklog/phase-17-sql-database-built-and-removed.md).
 
 **Container Apps environment** is the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
 
