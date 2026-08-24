@@ -95,9 +95,3 @@ variable "sql_admin_login_name" {
   type        = string
   default     = "cslab-sql-admin"
 }
-
-variable "sql_admin_ip_addresses" {
-  description = "Administrator addresses permitted through the SQL firewall, keyed by a name describing each."
-  type        = map(string)
-  default     = {}
-}
