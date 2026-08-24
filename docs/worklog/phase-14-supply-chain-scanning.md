@@ -52,7 +52,7 @@ Starlette moved from `0.41` to `1.6`, a major version jump. The authentication a
 
 ![A direct call is still refused after the upgrade](../images/phase-14-auth-survives-dependency-upgrade.png)
 
-Proves the closed path still closes. A call to the API bypassing the proxy returns `401` on the upgraded dependencies.
+The closed path still closes. A call to the API bypassing the proxy returns `401` on the upgraded dependencies.
 
 Checking the success path alone would not have caught a regression here. A working `/api/status` proves the key is accepted, not that a missing key is rejected.
 

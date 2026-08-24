@@ -16,11 +16,11 @@ The auth middleware is registered before the logger. Starlette makes the last re
 
 ![The API answers through the proxy](../images/phase-11-api-status-through-proxy.png)
 
-Proves the happy path: the proxy supplies the key and `/api/status` returns 200 with the JSON body.
+The happy path: the proxy supplies the key and `/api/status` returns 200 with the JSON body.
 
 ![A direct call without the key is refused](../images/phase-11-direct-call-rejected.png)
 
-Proves the closed path: calling `http://api:8080/status` from inside the web container, bypassing the proxy, returns `401 Unauthorized`.
+The closed path: calling `http://api:8080/status` from inside the web container, bypassing the proxy, returns `401 Unauthorized`.
 
 ## Upstream TLS
 
@@ -44,7 +44,7 @@ Two details it depends on. The nginx alpine image needs `ca-certificates` instal
 
 ![Terraform plans the secret and both apps](../images/phase-11-plan-secret-and-both-apps.png)
 
-Proves the change was 1 to add and 2 to change: the generated secret, plus both container apps picking up the new environment variable.
+The change was 1 to add and 2 to change: the generated secret, plus both container apps picking up the new environment variable.
 
 ## Verified in Azure
 

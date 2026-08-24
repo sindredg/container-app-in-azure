@@ -20,15 +20,15 @@ For the test the ceiling went to 5 and the threshold to 2, which is low enough t
 
 ![No replicas before the test](../images/phase-13-replicas-at-zero.png)
 
-Proves the starting point. The app had scaled to zero, so nothing was running and nothing was being billed for compute.
+The starting point. The app had scaled to zero, so nothing was running and nothing was being billed for compute.
 
 ![Load generator running](../images/phase-13-load-generator-running.png)
 
-Proves the load: 20 concurrent requests at a time, repeated, against the public endpoint.
+The load: 20 concurrent requests at a time, repeated, against the public endpoint.
 
 ![Five replicas under load](../images/phase-13-five-replicas-under-load.png)
 
-Proves scale-out reached the ceiling of 5 within about three minutes of load starting. No request failed during the test.
+Scale-out reached the ceiling of 5 within about three minutes of load starting. No request failed during the test.
 
 Both values returned to 1 and 10 afterwards.
 
@@ -61,11 +61,11 @@ A replica was restarted while the site was polled once a second.
 
 ![Restarting the running revision](../images/phase-13-replica-restart.png)
 
-Proves the restart was issued against the revision serving traffic.
+The restart was issued against the revision serving traffic.
 
 ![Traffic continues through the restart](../images/phase-13-traffic-uninterrupted.png)
 
-Proves no request failed. Every response through the restart was 200.
+No request failed. Every response through the restart was 200.
 
 The system log explains why:
 

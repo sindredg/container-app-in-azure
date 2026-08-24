@@ -22,6 +22,6 @@ terraform plan                          # No changes
 
 ![First Azure resource group commit on its feature branch](../images/phase-02-resource-group-commit.png)
 
-Proves the work was committed as `feat: add first azure rg` on branch `3-first-azure-rg`, on top of the squash-merged phase 1 commit.
+The work was committed as `feat: add first azure rg` on branch `3-first-azure-rg`, on top of the squash-merged phase 1 commit.
 
 The resource group is visible as the containing scope in phase 4, at `images/phase-04-platform-resources-portal.png`.
