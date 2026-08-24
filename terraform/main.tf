@@ -57,7 +57,7 @@ module "api_app" {
 
 }
 
-# Public endpoint reachable only from named addresses. A private endpoint is the
+# Public endpoint guarded by Entra-only authentication. A private endpoint is the
 # preferred end state, recorded in the decision log.
 module "database" {
   source = "./modules/database"
@@ -70,10 +70,7 @@ module "database" {
   admin_object_id  = var.sql_admin_object_id
   admin_login_name = var.sql_admin_login_name
 
-  allowed_ip_addresses = merge(
-    { container-apps-environment = module.platform.static_ip_address },
-    var.sql_extra_allowed_ips,
-  )
+  admin_ip_addresses = var.sql_admin_ip_addresses
 
   log_analytics_workspace_id = module.platform.log_analytics_workspace_id
 

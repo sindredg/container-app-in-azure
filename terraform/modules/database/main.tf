@@ -32,10 +32,18 @@ resource "azurerm_mssql_database" "main" {
   tags = var.tags
 }
 
-# Named addresses only. Azure services are not allowed as a group, since that
-# would admit every tenant.
-resource "azurerm_mssql_firewall_rule" "allowed" {
-  for_each = var.allowed_ip_addresses
+# 0.0.0.0 is the Azure services rule. Consumption plan egress addresses are not
+# stable, so a per-address rule would fail silently whenever Azure rotates them.
+resource "azurerm_mssql_firewall_rule" "azure_services" {
+  name             = "allow-azure-services"
+  server_id        = azurerm_mssql_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+# Administrator addresses, needed to run the contained user grants by hand.
+resource "azurerm_mssql_firewall_rule" "admin" {
+  for_each = var.admin_ip_addresses
 
   name             = each.key
   server_id        = azurerm_mssql_server.main.id

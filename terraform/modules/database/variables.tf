@@ -28,8 +28,8 @@ variable "admin_login_name" {
   type        = string
 }
 
-variable "allowed_ip_addresses" {
-  description = "Addresses permitted through the server firewall, keyed by a name describing each. Empty means nothing can reach it."
+variable "admin_ip_addresses" {
+  description = "Administrator addresses permitted through the firewall, keyed by a name describing each."
   type        = map(string)
   default     = {}
 }

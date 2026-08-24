@@ -89,8 +89,8 @@ variable "sql_admin_login_name" {
   type        = string
 }
 
-variable "sql_extra_allowed_ips" {
-  description = "Addresses beyond the Container Apps environment permitted through the SQL firewall, keyed by a name describing each."
+variable "sql_admin_ip_addresses" {
+  description = "Administrator addresses permitted through the SQL firewall, keyed by a name describing each."
   type        = map(string)
   default     = {}
 }
