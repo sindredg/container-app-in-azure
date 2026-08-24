@@ -130,3 +130,21 @@ The pipeline holds Contributor, which deliberately excludes managing role assign
 The pipeline can already delete the registry and both applications, so this is not about limiting the damage it can do. Destruction is loud and rebuilt from code in minutes. A quietly granted permission persists and nobody notices.
 
 **Alternative:** Give the pipeline permission to manage role assignments on the registry. One line, and it could then change who has access to anything, including granting itself more. The cost of not doing it is that some changes need a person and cannot deploy unattended.
+
+## Why was the SQL database removed after it was built?
+
+Nothing connected to it. The API was never wired up, so what was deployed was a public endpoint with no consumer, which is attack surface without a purpose.
+
+It also sat outside the platform region, because this subscription cannot provision Azure SQL in norwayeast. That was solved rather than worked around, but it left the one unused component as the one component needing a regional exception explained in its name.
+
+**Alternative:** Keep it and wire the API to it. That is the version where the database earns its place, and it is the right answer if the application needs to hold state. This application does not yet, and keeping an unused database to justify the effort already spent on it is the wrong reason to keep anything.
+
+## Why does the plan comment hide the subscription ID?
+
+Terraform prints full resource IDs, and every one of them contains the subscription ID. This repository is public, so each plan comment published it.
+
+The subscription ID is on the project redaction list and is blacked out of every screenshot in the worklog. The pipeline posting it in cleartext was the one place that standard was not being applied.
+
+Actions masks repository secrets in job logs automatically, but a comment is posted through the API, where masking does not reach. So the redaction happens where the file is read, before the comment is built.
+
+**Alternative:** Leave it. A subscription ID is an identifier rather than a credential, and knowing it grants nobody anything without an identity Entra will authenticate. The cost of leaving it is a redaction standard the project applies to its screenshots and not to its pipeline.
