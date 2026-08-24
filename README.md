@@ -19,12 +19,12 @@ flowchart TB
     U["Internet client"]
 
     subgraph CAE["Container Apps environment"]
-        WEB["Public web Container App<br/>Nginx, external HTTPS ingress"]
-        API["Internal API Container App<br/>internal ingress only"]
+        WEB["Web Container App<br/>Nginx, external HTTPS ingress"]
+        API["API Container App<br/>internal ingress only"]
     end
 
-    ACR["Private Azure Container Registry"]
-    MI["User-assigned managed identities<br/>repository reader, one per app"]
+    ACR["Private Azure Container Registry<br/>ABAC, admin user disabled"]
+    MI["User-assigned managed identities<br/>one per app, repository scoped"]
     LAW["Log Analytics workspace"]
     SENT["Microsoft Sentinel<br/>detection rules"]
     ST["Azure Blob Storage<br/>Terraform state"]
@@ -32,7 +32,7 @@ flowchart TB
     GHA["GitHub Actions<br/>federated credentials"]
 
     U -->|"HTTPS"| WEB
-    WEB -->|"server-side proxy over internal ingress"| API
+    WEB -->|"server-side proxy, shared secret"| API
     MI -.->|"authenticates the image pull"| ACR
     ACR -->|"private image"| WEB
     ACR -->|"private image"| API
@@ -49,7 +49,7 @@ flowchart TB
     class SENT planned
 ```
 
-Dashed boxes are planned. Everything else is deployed.
+Dashed boxes are planned. Everything else is deployed. A deeper breakdown of the components, request path, boundaries, and delivery pipeline is in the [architecture notes](docs/architecture.md).
 
 Private networking was evaluated and not pursued: it requires rebuilding the environment, bills continuously, and would end the scale-to-zero behaviour this platform relies on. The reasoning is in the [decision log](docs/decisions.md).
 
