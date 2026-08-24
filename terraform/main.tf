@@ -57,6 +57,29 @@ module "api_app" {
 
 }
 
+# Public endpoint reachable only from named addresses. A private endpoint is the
+# preferred end state, recorded in the decision log.
+module "database" {
+  source = "./modules/database"
+
+  server_name         = "sql-${local.project_name}-${var.environment}"
+  database_name       = "sqldb-${local.project_name}-${var.environment}"
+  resource_group_name = module.platform.resource_group_name
+  location            = module.platform.location
+
+  admin_object_id  = var.sql_admin_object_id
+  admin_login_name = var.sql_admin_login_name
+
+  allowed_ip_addresses = merge(
+    { container-apps-environment = module.platform.static_ip_address },
+    var.sql_extra_allowed_ips,
+  )
+
+  log_analytics_workspace_id = module.platform.log_analytics_workspace_id
+
+  tags = merge(local.common_tags, { component = "database" })
+}
+
 module "web_app" {
   source = "./modules/web-app"
 

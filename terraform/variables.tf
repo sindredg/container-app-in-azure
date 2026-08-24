@@ -77,3 +77,20 @@ variable "web_concurrent_requests" {
   type        = number
   default     = 10
 }
+
+variable "sql_admin_object_id" {
+  description = "Object ID of the Entra principal administering SQL. Supplied at apply time, never committed."
+  type        = string
+  sensitive   = true
+}
+
+variable "sql_admin_login_name" {
+  description = "Display name of the Entra SQL administrator."
+  type        = string
+}
+
+variable "sql_extra_allowed_ips" {
+  description = "Addresses beyond the Container Apps environment permitted through the SQL firewall, keyed by a name describing each."
+  type        = map(string)
+  default     = {}
+}
