@@ -125,31 +125,3 @@
 **Cause:** Pushing to a branch updates the branch. It does not reopen a merged pull request and it does not move `main`, so the commit sat where nothing would merge it again.
 
 **Fix:** Branch from current `main`, apply the fix there, open a new pull request. After pushing to an existing branch, check that its pull request is still open.
-
-## A failing Terraform plan reported success
-
-**Symptom:** A pull request check reported pass while Terraform had failed with `No value for required variable`.
-
-**Cause:** The plan step piped Terraform into `tee`. A shell pipeline reports the exit status of its last command, so the step reported whether `tee` could write a file, never whether Terraform succeeded. This had been the case since the pipeline was built in phase 12.
-
-**Fix:** `set -o pipefail` before the pipeline, so a failure anywhere in it fails the step. The unused `exitcode` output was removed in the same change, because its presence suggested the exit status was being handled when nothing read it.
-
-No bad plan reached main because of this. Every plan was also posted to the pull request and read. The check was decoration, and decoration that resembles a control is worse than no control.
-
-## Azure refused to create a SQL server in the platform region
-
-**Symptom:** `terraform plan` passed. `terraform apply` failed with `ProvisioningDisabled`, saying provisioning is restricted in this region.
-
-**Cause:** The subscription is not permitted to provision Azure SQL in norwayeast, nor in westeurope, northeurope or uksouth. The `Microsoft.Sql/locations/<region>/capabilities` API reports these as `Visible` rather than `Available`, meaning the region appears and accepts the request, then refuses at provisioning time. A plan cannot detect it.
-
-**Fix:** Move the database to `swedencentral`, which reports `Available`. Query the capabilities API before choosing a region rather than assuming a region that hosts other resources will host this one.
-
-## A resource name stayed bound to a region where nothing was created
-
-**Symptom:** After moving the database to another region, the apply failed with `InvalidResourceLocation`, saying the server already exists in norwayeast. It did not exist. ARM returned 404 for it, the resource list was empty, and Terraform state held no database resources.
-
-**Cause:** The failed create was accepted by ARM before provisioning refused it, and acceptance writes a name to location binding in the resource group scoped registry. That record outlived the resource it was for.
-
-`checkNameAvailability` does not detect this. It returned `available: true` before the first attempt and continued to while the 409 was raised, because it answers for the global DNS namespace rather than the per resource group registry.
-
-**Fix:** Derive the server name from its region, so the name changes when the region does. This clears the current binding and prevents a repeat, because a later region change produces a new name instead of meeting the previous region's record.
