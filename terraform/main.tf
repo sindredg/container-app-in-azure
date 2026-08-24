@@ -57,7 +57,6 @@ module "api_app" {
 
 }
 
-# The one resource outside the platform region, which cannot provision SQL.
 module "database" {
   source = "./modules/database"
 

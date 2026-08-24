@@ -1,5 +1,4 @@
 resource "azurerm_mssql_server" "main" {
-  # Public by decision, with Entra-only auth as the control instead of the network.
   #checkov:skip=CKV_AZURE_113: public access is deliberate, Entra-only auth replaces the network control.
   #checkov:skip=CKV2_AZURE_45: a private endpoint needs a VNet and workload profiles environment, rejected as a rebuild.
   #checkov:skip=CKV2_AZURE_2: vulnerability assessment requires a storage account, out of scope for this lab.
@@ -11,7 +10,6 @@ resource "azurerm_mssql_server" "main" {
 
   minimum_tls_version = "1.2"
 
-  # No SQL login exists, not even a disabled one. Entra is the only way in.
   azuread_administrator {
     login_username              = var.admin_login_name
     object_id                   = var.admin_object_id
@@ -21,7 +19,6 @@ resource "azurerm_mssql_server" "main" {
   tags = var.tags
 }
 
-# Serverless with auto-pause, so an idle database bills like the apps that scale to zero.
 resource "azurerm_mssql_database" "main" {
   #checkov:skip=CKV_AZURE_229: zone redundancy costs more than a lab database justifies.
   #checkov:skip=CKV_AZURE_224: the ledger feature answers a requirement this project does not have.
@@ -39,7 +36,7 @@ resource "azurerm_mssql_database" "main" {
   tags = var.tags
 }
 
-# The only rule. Administration runs from Cloud Shell, which is inside Azure already.
+# Administration runs from Cloud Shell, inside Azure, so no personal address is needed.
 resource "azurerm_mssql_firewall_rule" "azure_services" {
   #checkov:skip=CKV2_AZURE_34: per-address rules cannot work when Consumption plan egress rotates.
   name             = "allow-azure-services"
@@ -48,7 +45,6 @@ resource "azurerm_mssql_firewall_rule" "azure_services" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Server level, so failed authentication against the server is captured too.
 resource "azurerm_mssql_server_extended_auditing_policy" "main" {
   server_id              = azurerm_mssql_server.main.id
   log_monitoring_enabled = true
