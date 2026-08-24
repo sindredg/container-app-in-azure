@@ -28,12 +28,6 @@ variable "admin_login_name" {
   type        = string
 }
 
-variable "admin_ip_addresses" {
-  description = "Administrator addresses permitted through the firewall, keyed by a name describing each."
-  type        = map(string)
-  default     = {}
-}
-
 variable "log_analytics_workspace_id" {
   description = "Workspace receiving the database audit log."
   type        = string
