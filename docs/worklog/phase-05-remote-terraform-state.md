@@ -4,7 +4,7 @@
 
 Move Terraform state out of local WSL files into a protected Azure Blob Storage backend, with two independent root modules sharing one private container under different blob keys.
 
-Related: [store Terraform state in Azure Blob Storage](../decisions.md).
+Background: [DEC-019](../decisions.md) through [DEC-024](../decisions.md) cover the bootstrap root, separate state keys, Entra authentication, versioning and soft delete, and the delete lock.
 
 ## Backend
 
@@ -12,15 +12,15 @@ A separate root at `terraform/bootstrap/state-backend/` creates the backend itse
 
 ![Terraform creates the remote state backend](../images/phase-05-backend-apply-complete.png)
 
-Proves the bootstrap root added 5 resources and returned the storage account, container, and resource group names.
+The bootstrap root added 5 resources and returned the storage account, container, and resource group names.
 
 ![Storage account state security settings](../images/phase-05-storage-security-settings.png)
 
-Proves the account enforces TLS 1.2 minimum, has shared key authentication disabled, and blocks public blob access.
+The account enforces TLS 1.2 minimum, has shared key authentication disabled, and blocks public blob access.
 
 ![Terraform state storage account delete lock](../images/phase-05-storage-delete-lock.png)
 
-Proves the `lock-terraform-state` management lock is set to `CanNotDelete`.
+The `lock-terraform-state` management lock is set to `CanNotDelete`.
 
 ## Two keys, one container
 
@@ -28,11 +28,11 @@ Authentication is Entra-based throughout. The provider sets `storage_use_azuread
 
 ![Bootstrap state backend configuration](../images/phase-05-bootstrap-backend-config.png)
 
-Proves the bootstrap root targets key `bootstrap/dev.tfstate`.
+The bootstrap root targets key `bootstrap/dev.tfstate`.
 
 ![Platform state backend configuration](../images/phase-05-platform-backend-config.png)
 
-Proves the platform root uses the same account and container but the different key `platform/dev.tfstate`.
+The platform root uses the same account and container but the different key `platform/dev.tfstate`.
 
 Different keys keep the states independent: a command run in the bootstrap root cannot touch the six platform resources, because they are not in its state.
 
@@ -46,36 +46,38 @@ terraform init -migrate-state   # answer: yes
 
 ![Bootstrap state migration succeeds](../images/phase-05-bootstrap-state-migration.png)
 
-Proves the migration prompt was answered `yes` and the `azurerm` backend was configured.
+The migration prompt was answered `yes` and the `azurerm` backend was configured.
 
 ![Platform state migration succeeds](../images/phase-05-platform-state-migration.png)
 
-Proves the platform root was migrated the same way, copying pre-existing state.
+The platform root was migrated the same way, copying pre-existing state.
 
 Migration moves Terraform's management record only. It did not recreate or move any Azure resource.
 
 ![Bootstrap root still tracks the backend resources](../images/phase-05-bootstrap-state-list.png)
 
-Proves the bootstrap state still contains the storage account, container, resource group, role assignment, and lock.
+The bootstrap state still contains the storage account, container, resource group, role assignment, and lock.
 
 ![Platform root still tracks the six managed resources](../images/phase-05-platform-state-list.png)
 
-Proves the platform state still contains all six platform resources and did not absorb the backend resources.
+The platform state still contains all six platform resources and did not absorb the backend resources.
 
 ![Bootstrap root reports no infrastructure changes](../images/phase-05-bootstrap-plan-no-changes.png)
 
-Proves a plan from the migrated bootstrap root refreshed the real resources and reported no changes.
+A plan from the migrated bootstrap root refreshed the real resources and reported no changes.
 
 ![Platform root reports no infrastructure changes](../images/phase-05-platform-plan-no-changes.png)
 
-Proves the same for the platform root across all six resources.
+The same for the platform root across all six resources.
 
 ![Both Terraform state roots exist in Azure Blob Storage](../images/phase-05-remote-state-blobs.png)
 
-Proves both keys exist as real blobs, listed with `--auth-mode login` rather than an account key.
+Both keys exist as real blobs, listed with `--auth-mode login` rather than an account key.
 
 ## Cleanup
 
 ![Local state artifacts identified before cleanup](../images/phase-05-local-state-artifacts.png)
 
-Proves the local state files and the two temporary migration backups were located by exact path before deletion, rather than removed with a wildcard.
+The local state files and the two temporary migration backups were located by exact path before deletion, rather than removed with a wildcard.
+
+The backup copies that briefly sat outside Git are recorded in the [troubleshooting log](../troubleshooting.md).

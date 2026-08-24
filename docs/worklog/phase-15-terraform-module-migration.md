@@ -52,19 +52,19 @@ The upgrade broke the pipeline in a way an empty plan gave no warning about.
 
 ![The state could not be decoded under the new provider](../images/phase-15-state-decode-error.png)
 
-Proves state written by the 4.x provider carried `trust_policy_enabled` on the registry, an attribute 5.x removed. `plan` tolerated it because it refreshes from Azure. `terraform console` decodes state directly, so it failed.
+State written by the 4.x provider carried `trust_policy_enabled` on the registry, an attribute 5.x removed. `plan` tolerated it because it refreshes from Azure. `terraform console` decodes state directly, so it failed.
 
 Cleared with `terraform apply -refresh-only`, which updates state from reality and changes no infrastructure.
 
 ![The console command rejected its arguments](../images/phase-15-console-argument-error.png)
 
-Proves a second, separate fault. The fix for the first one wrote a literal backslash-n where a line continuation was meant, so bash passed it and everything after it to `terraform console` as positional arguments.
+A second, separate fault. The fix for the first one wrote a literal backslash-n where a line continuation was meant, so bash passed it and everything after it to `terraform console` as positional arguments.
 
 The version guard added alongside caught it. It saw the empty result and failed the step with a clear message rather than writing an empty image tag and failing later somewhere less obvious.
 
 ![Two workflow runs collided on the state lock](../images/phase-15-state-lock-collision.png)
 
-Proves a third issue, unrelated to the upgrade. Nothing prevented two workflow runs at once, so a plan and an apply raced and one died on the lock. The lock behaved correctly. The pipeline did not.
+A third issue, unrelated to the upgrade. Nothing prevented two workflow runs at once, so a plan and an apply raced and one died on the lock. The lock behaved correctly. The pipeline did not.
 
 Both workflows now share a concurrency group so runs queue. `cancel-in-progress` is deliberately false, because cancelling a running apply is how this project orphaned a state lease in phase 7.
 
@@ -72,7 +72,7 @@ Both workflows now share a concurrency group so runs queue. `cancel-in-progress`
 
 ![The pipeline runs green end to end](../images/phase-15-pipeline-green.png)
 
-Proves the full path working after all three fixes: login, init, read image tags, registry login, build, apply, smoke test. 1 minute 44 seconds.
+The full path working after all three fixes: login, init, read image tags, registry login, build, apply, smoke test. 1 minute 44 seconds.
 
 | Check | Result |
 |---|---|
@@ -81,6 +81,6 @@ Proves the full path working after all three fixes: login, init, read image tags
 | Provider 5.x | Both roots plan with no changes |
 | Pipeline | Green end to end |
 
-## What this phase demonstrated
+## Notes
 
 A clean plan is not proof that a change is safe. The 5.x plan was empty and honest, and the upgrade still broke a pipeline step that reads state directly rather than refreshing it. Plan exercises infrastructure, not every code path around it.
