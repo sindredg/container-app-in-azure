@@ -78,6 +78,12 @@ variable "web_concurrent_requests" {
   default     = 10
 }
 
+variable "sql_location" {
+  description = "Region holding the SQL server. Separate from the platform region because this subscription cannot provision SQL in norwayeast."
+  type        = string
+  default     = "swedencentral"
+}
+
 variable "sql_admin_object_id" {
   description = "Object ID of the Entra principal administering SQL. Supplied at apply time, never committed."
   type        = string

@@ -59,13 +59,17 @@ module "api_app" {
 
 # Public endpoint guarded by Entra-only authentication. A private endpoint is the
 # preferred end state, recorded in the decision log.
+#
+# The only resource not in the platform region. This subscription is barred from
+# provisioning SQL in norwayeast, so the database sits in the nearest region that
+# allows it. See var.sql_location.
 module "database" {
   source = "./modules/database"
 
   server_name         = "sql-${local.project_name}-${var.environment}"
   database_name       = "sqldb-${local.project_name}-${var.environment}"
   resource_group_name = module.platform.resource_group_name
-  location            = module.platform.location
+  location            = var.sql_location
 
   admin_object_id  = var.sql_admin_object_id
   admin_login_name = var.sql_admin_login_name
