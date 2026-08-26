@@ -1,18 +1,9 @@
 # Azure Container Platform
 
 Two containerised services on Azure Container Apps. A public web tier and an internal API, built and operated with Terraform.
-
 Built in phases, each with a [worklog](docs/worklog/) and a record of the [decisions](docs/decisions.md).
 
-## Live Container App
-
-[Cloud Operations Lab (web app)](https://ca-container-scale-lab-web-dev.graysand-e63d8c5e.norwayeast.azurecontainerapps.io)
-
-Both services scale to zero when idle, so the first request after a quiet period may be slow or time out while a container starts. A retry succeeds. The site may also be briefly unavailable during a release.
-
 ## Architecture
-
-The complete design. The status table above tracks how much of it exists so far.
 
 ```mermaid
 flowchart TB
@@ -49,34 +40,7 @@ flowchart TB
     class SENT planned
 ```
 
-Dashed boxes are planned. Everything else is deployed. A deeper breakdown of the components, request path, boundaries, and delivery pipeline is in the [architecture notes](docs/architecture.md).
-
-Private networking was evaluated and not pursued: it requires rebuilding the environment, bills continuously, and would end the scale-to-zero behaviour this platform relies on. The reasoning is in the [decision log](docs/decisions.md).
-
-## Current status
-
-| Component | Status |
-|---|---|
-| Resource group | Deployed |
-| Log Analytics | Deployed |
-| Container Apps environment | Deployed |
-| Azure Container Registry | Deployed |
-| Managed pull identity | Deployed |
-| Remote Terraform state | Deployed |
-| Public web Container App | Deployed |
-| Routing and response hardening | Deployed |
-| API authentication and upstream TLS | Deployed |
-| Network-level request logging | Deployed |
-| Internal API Container App | Deployed |
-| Same-origin proxy from web to API | Deployed |
-| Multiple revisions with traffic-weight rollback | Deployed |
-| Scaling above one replica | Deployed |
-| Automated delivery with federated credentials | Deployed |
-| Image and Terraform scanning | Deployed |
-| Terraform split into modules | Deployed |
-| Scale, rollback, and recovery tested | Deployed |
-| Per-app identities with repository conditions | Deployed |
-| Microsoft Sentinel detection rules | Potential |
+A deeper breakdown of the components, request path, boundaries, and delivery pipeline is in the [architecture notes](docs/architecture.md).
 
 ## How it fits together
 
@@ -96,27 +60,6 @@ Private networking was evaluated and not pursued: it requires rebuilding the env
 
 **Docker and Compose:** both images are built locally and verified before they reach Azure. In the local composition the API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress boundary rather than approximating it.
 
-## Current deployment
-
-Two container apps share one environment and one read-only pull identity.
-
-**Public web app:** Nginx serving a static site, image `web:0.2.0`
-
-- Azure-managed HTTPS on external ingress
-- Real `404` responses for missing paths
-- No web server version in responses
-- Four protective response headers, applied to proxied responses as well
-- Access logs truncated to the client `/24` network
-- A `/api/` location proxying to the internal API, so the browser only ever calls its own origin
-
-**Internal API:** FastAPI, image `api:0.1.0`
-
-- Internal ingress only. The hostname resolves publicly, but the environment refuses to route to it
-- The version reported at runtime comes from the deployed image tag, so the two cannot drift
-- Requests are logged without any client address
-
-Both apps run on Linux AMD64, pull private images with managed identity and no registry password, carry startup, readiness and liveness probes, scale from zero to one replica, and are tagged by component for cost and inventory views.
-
 ## Validation
 
 The deployment has been validated through:
@@ -134,12 +77,6 @@ The deployment has been validated through:
 - Terraform drift checks
 
 Validation evidence, implementation phases, decisions, and troubleshooting records are available under [`docs/`](docs/README.md). Step-by-step records with screenshot evidence are in the [worklog](docs/worklog/).
-
-## Known open items
-
-Tracked as issues rather than left implicit:
-- A cold start after a long idle can return `504` to the first request
-
 
 ## Repository structure
 
@@ -173,6 +110,6 @@ Terraform state and saved plan files are not committed to Git.
 
 ## Project status
 
-The lab is complete. Every deployed component in the diagram above is built, validated, and documented, and the platform runs unattended through the pipeline.
+The lab is completed. Every deployed component in the diagram above is built, validated, and documented, and the platform runs unattended through the pipeline.
 
-Anything further would be an addition rather than a continuation, and would get its own phase, worklog entry, and decision record in the same way as the sixteen before it.
+**Note: The container app and website is no longer in use**
