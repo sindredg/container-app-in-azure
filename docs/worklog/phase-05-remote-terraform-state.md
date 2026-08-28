@@ -4,7 +4,7 @@
 
 Move Terraform state out of local WSL files into a protected Azure Blob Storage backend, with two independent root modules sharing one private container under different blob keys.
 
-Background: [DEC-019](../decisions.md) through [DEC-024](../decisions.md) cover the bootstrap root, separate state keys, Entra authentication, versioning and soft delete, and the delete lock.
+Background: [state backend ownership](../decisions.md#state-backend-ownership) covers the separate bootstrap root, [state layout](../decisions.md#state-layout) covers the two state keys in one private container.
 
 ## Backend
 

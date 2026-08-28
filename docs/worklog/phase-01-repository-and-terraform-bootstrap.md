@@ -4,7 +4,7 @@
 
 Establish the engineering workflow before any Azure resource exists: a local repository, a private GitHub remote, an issue-driven branch, version constraints, and a reviewed pull request. Nothing is applied to Azure in this phase.
 
-Background: [DEC-012](../decisions.md) covers why Terraform manages all persistent infrastructure.
+Background: [Terraform structure](../decisions.md#terraform-structure) and [state backend ownership](../decisions.md#state-backend-ownership) cover how the configuration is organised and which root owns the backend.
 
 ## Repository baseline
 
