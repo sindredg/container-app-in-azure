@@ -39,7 +39,7 @@ does not have authorization to perform action
 
 The CI identity holds Contributor, which deliberately excludes managing role assignments.
 
-This is DEC-044 working as designed rather than a misconfiguration. Worth being precise about what it protects: CI already holds Contributor on the resource group and can delete the registry, the apps, and the workspace. The boundary is not about limiting damage. It is that destruction is loud and rebuildable from Terraform, while a silent grant of access persists and is far harder to notice.
+This is [pipeline role assignment scope](../decisions.md#pipeline-role-assignment-scope) working as designed rather than a misconfiguration. Worth being precise about what it protects: CI already holds Contributor on the resource group and can delete the registry, the apps, and the workspace. The boundary is not about limiting damage. It is that destruction is loud and rebuildable from Terraform, while a silent grant of access persists and is far harder to notice.
 
 The alternative was granting CI `Role Based Access Control Administrator` on the registry. One line, and the pipeline could then change who has access to anything. Not worth the saving.
 

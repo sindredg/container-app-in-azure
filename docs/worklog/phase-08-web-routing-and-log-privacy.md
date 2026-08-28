@@ -4,7 +4,7 @@
 
 Correct the routing defect found in phase 7 validation, stop responses advertising the Nginx version, add protective headers, and reduce what the access log records about clients. Released as `0.1.2`.
 
-Background: [DEC-031](../decisions.md) on real 404s, [DEC-034](../decisions.md) on recording the client network, [DEC-036](../decisions.md) on the Content Security Policy. Full technical detail in [phase-08](../phases/phase-08-web-routing-and-log-privacy.md).
+Background: [unknown paths](../decisions.md#unknown-paths) on real 404s, [client address logging](../decisions.md#client-address-logging) on recording the client network, [content security policy](../decisions.md#content-security-policy) on the policy itself. Full technical detail in [phase-08](../phases/phase-08-web-routing-and-log-privacy.md).
 
 ## Before
 

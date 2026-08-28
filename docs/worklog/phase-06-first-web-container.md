@@ -4,8 +4,6 @@
 
 Build and test the first application image locally with Docker through WSL, before anything reaches a registry or Azure. Nginx serves a static page on port `8080` and exposes `/health`.
 
-Background: [DEC-014](../decisions.md) covers the Nginx choice, [DEC-027](../decisions.md) the port and health path standard.
-
 ## Build
 
 Five files under `app/web/`: `.dockerignore`, `Dockerfile`, `nginx.conf`, `index.html`, `styles.css`.
