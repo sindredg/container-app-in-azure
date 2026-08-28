@@ -4,7 +4,7 @@
 
 Build for the Azure runtime architecture, push to the private registry, deploy a public Container App that pulls with a managed identity, then validate it as an operator rather than trusting a successful apply.
 
-Background: [DEC-025](../decisions.md), [DEC-026](../decisions.md), [DEC-028](../decisions.md), [DEC-029](../decisions.md) cover immutable tags, `linux/amd64` builds, publisher and runtime identity separation, and the explicit probes.
+Background: [image tags](../decisions.md#image-tags) covers publishing each release once under an immutable tag, [registry authentication](../decisions.md#registry-authentication) covers pulling with a managed identity rather than registry credentials.
 
 ## Identity separation
 
@@ -129,4 +129,4 @@ The routing defect: `/admin`, `/login`, `/.env`, `/.git/config`, and `/server-st
 
 The probes were observable, each returning `200` with a 1621-byte body, which is the homepage size and confirms the fallback served the index page rather than exposing real files.
 
-The cause was `try_files $uri $uri/ /index.html`. This finding drove phase 8 and is recorded as [DEC-031](../decisions.md).
+The cause was `try_files $uri $uri/ /index.html`. This finding drove phase 8 and is recorded under [unknown paths](../decisions.md#unknown-paths).

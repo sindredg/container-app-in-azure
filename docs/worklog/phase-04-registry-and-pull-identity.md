@@ -4,7 +4,7 @@
 
 Build the private image supply path before any image exists: a registry with administrator credentials disabled, a user-assigned managed identity, and a read-only role assignment scoped to that registry.
 
-Background: [DEC-017](../decisions.md) and [DEC-018](../decisions.md) cover ABAC repository permissions and the Basic tier without admin credentials.
+Background: [registry access per application](../decisions.md#registry-access-per-application) covers ABAC repository permissions, [registry authentication](../decisions.md#registry-authentication) covers the registry without admin credentials.
 
 ## What was done
 

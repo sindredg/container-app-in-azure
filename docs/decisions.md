@@ -182,6 +182,16 @@ Alternatives: fail on high severity immediately, which sounds stricter and in pr
 
 Notes: the first scan returned 100 findings. Seven were in a dependency this project chose. The other ninety three came from the base image, and all three criticals were Perl vulnerabilities in a Python image that never runs Perl.
 
+## Plan comment redaction
+
+Decision: the plan output has every `/subscriptions/<guid>` replaced with `/subscriptions/<redacted>` before the pull request comment is built.
+
+Why: Terraform prints full resource IDs, every one of them carries the subscription ID, and this repository is public.
+
+Alternatives: leave it. A subscription ID is an identifier rather than a credential, and the cost is a redaction standard the project applies to its screenshots and not to its pipeline.
+
+Notes: Actions [masks repository secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets) in job logs, but a comment is posted through the API, where masking does not reach.
+
 ## Relationship to the hub and spoke lab
 
 Decision: unconnected. This platform stays publicly reachable and [scales to zero](https://learn.microsoft.com/en-us/azure/container-apps/scale-app); the [hub and spoke](https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke) lab is destroyed after each session.

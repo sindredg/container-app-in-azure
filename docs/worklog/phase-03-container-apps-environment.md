@@ -4,7 +4,7 @@
 
 Add the shared runtime boundary for the future web and API services: a Log Analytics workspace and a Container Apps environment, with environment logs pointed at the workspace.
 
-Background: [DEC-002](../decisions.md) covers running related services in one environment, [DEC-010](../decisions.md) covers skipping a custom VNet in the first version.
+Background: [compute platform](../decisions.md#compute-platform) covers running both applications in one environment, [relationship to the hub and spoke lab](../decisions.md#relationship-to-the-hub-and-spoke-lab) covers the absence of a custom VNet.
 
 ## What was done
 
