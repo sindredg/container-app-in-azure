@@ -1,115 +1,68 @@
-# Azure Container Platform
+# Azure Container Apps: public web, internal API
 
-Two containerised services on Azure Container Apps. A public web tier and an internal API, built and operated with Terraform.
-Built in phases, each with a [worklog](docs/worklog/) and a record of the [decisions](docs/decisions.md).
+A public Nginx app served a static site and proxied requests to a FastAPI service with internal
+ingress. Terraform defined the platform, and GitHub Actions built, deployed, and checked releases
+using federated Azure authentication.
 
-## Architecture
-
-```mermaid
-flowchart TB
-    U["Internet client"]
-
-    subgraph CAE["Container Apps environment"]
-        WEB["Web Container App<br/>Nginx, external HTTPS ingress"]
-        API["API Container App<br/>internal ingress only"]
-    end
-
-    ACR["Private Azure Container Registry<br/>ABAC, admin user disabled"]
-    MI["User-assigned managed identities<br/>one per app, repository scoped"]
-    LAW["Log Analytics workspace"]
-    SENT["Microsoft Sentinel<br/>detection rules"]
-    ST["Azure Blob Storage<br/>Terraform state"]
-    TF["Terraform"]
-    GHA["GitHub Actions<br/>federated credentials"]
-
-    U -->|"HTTPS"| WEB
-    WEB -->|"server-side proxy, shared secret"| API
-    MI -.->|"authenticates the image pull"| ACR
-    ACR -->|"private image"| WEB
-    ACR -->|"private image"| API
-    WEB -->|"application logs"| LAW
-    API -->|"application logs"| LAW
-    CAE -->|"platform logs"| LAW
-    LAW -->|"analytics rules"| SENT
-    TF -->|"manages infrastructure"| CAE
-    TF -->|"manages infrastructure"| ACR
-    TF -->|"remote state and locking"| ST
-    GHA -->|"plan and apply"| TF
-
-    classDef planned stroke-dasharray: 6 4
-    class SENT planned
-```
-
-A deeper breakdown of the components, request path, boundaries, and delivery pipeline is in the [architecture notes](docs/architecture.md).
+> **Completed lab; environment torn down.** The results below are historical tests with retained
+> evidence. This documentation update does not represent a new deployment.
 
 ## How it fits together
 
-**Public web app:** the only thing on the internet. Nginx serves a static site and carries an `/api/` location that proxies to the API from inside the container. Because the proxy happens server-side rather than in the browser, the API's hostname never reaches client code, every request the browser makes is to its own origin, and no CORS configuration exists anywhere in the system.
+![Container Apps overview: public HTTPS reaches Nginx, which proxies over verified HTTPS to internal API ingress with X-Api-Key. Direct browser calls to the API hostname stop at ingress with 404 before FastAPI. Containers listen on HTTP port 8080. Separate identities and conditional Reader roles authorize image pulls; GitHub Actions runs Terraform with Blob Storage state, and logs flow to Log Analytics.](docs/diagrams/platform-overview.svg)
 
-**Internal API:** a FastAPI service reachable only from inside the Container Apps environment. Its hostname resolves publicly, but the environment refuses to route to it, so the web app is the only path in. It reports which revision and replica answered, read from variables Azure injects at runtime, so the page shows what the platform is doing rather than describing it.
+- **Request path:** the browser uses the web origin for both the page and `/api/status`.
+  Nginx adds `X-Api-Key` and verifies the API endpoint's TLS certificate. Managed ingress
+  terminates HTTPS; containers listen on HTTP port 8080. A direct browser call to the API hostname
+  is rejected by ingress with `404` before reaching FastAPI.
+- **Image access:** each app uses a managed identity and a registry Reader role. Azure ABAC
+  conditions check the repository name, limiting reads to `web` or `api`. The registry admin
+  account is disabled; its endpoint is public.
+- **Delivery and state:** Terraform changes receive a PR plan. Relevant merges queue deployment
+  for approval, followed by image publication, apply, and smoke tests. Azure sign-in uses OIDC.
+  Human-applied bootstrap owns permission grants; workload CI runs the platform root. Blob leases lock state.
+- **Logs:** console and platform logs go to Log Analytics. Nginx records IPv4 `/24` prefixes;
+  API request logs omit addresses, with Uvicorn access logging disabled.
 
-**Container Apps environment** is the shared boundary both services live in. It provides ingress and TLS termination, scaling, revisions, health probes, and the internal DNS that lets the web app reach the API without either service knowing the other's address in advance.
+The [architecture notes](docs/architecture.md) trace requests, identities, scaling, and delivery.
+The [decision log](docs/decisions.md) explains the choices with links to Microsoft, Terraform,
+and application documentation.
 
-**Container Registry:** private, with the admin account disabled. Images are published under immutable version tags, so a deployment names one exact artifact and a rollback is redeploying the previous tag rather than rebuilding anything.
+## What was verified
 
-**Managed identity:** how the workloads prove who they are without secrets. The registry grants a read-only role to a user-assigned identity, and each Container App presents that identity when pulling an image. No registry password exists in Terraform, in state, in an environment variable, or in the image.
+Selected historical results; each record identifies the test environment and release.
 
-**Log Analytics:** where both applications and the platform itself send logs. Application logs from each tier land alongside platform events like scaling and revision changes, so a single request can be followed across both services. The web tier records the client's `/24` network rather than their address; the API records no address at all.
+| Behavior checked | Observed result | Evidence |
+| --- | --- | --- |
+| Public proxy and internal ingress | `/api/status` returned `200` through the site; the API hostname returned an Azure-front-end `404` from outside the environment | [Ingress and proxy checks](docs/worklog/phase-10-internal-api-container-app.md#verification) |
+| API key and upstream TLS | A local call bypassing the proxy returned `401` without the key; the Azure proxy path returned `200` with certificate verification enabled | [Key check](docs/worklog/phase-11-api-authentication-and-upstream-tls.md#authentication), [TLS](docs/worklog/phase-11-api-authentication-and-upstream-tls.md#upstream-tls) |
+| Scale-out under load | The web app reached five replicas in about three minutes at 20 concurrent requests; no failed requests were observed in that test | [Scale test](docs/worklog/phase-13-scaling-and-release-mechanics.md#scale-test) |
+| Routing and log privacy | Azure logs showed a missing asset returning `404` and truncated IPv4 addresses after the routing update | [Azure verification](docs/worklog/phase-08-web-routing-and-log-privacy.md#azure-verification) |
+| Per-app image identities | Separate repository conditions replaced the shared registry-wide app reader; site and API returned `200` after migration | [Identity migration](docs/worklog/phase-16-per-app-pull-identities.md#result) |
 
-**Terraform:** every resource above is declared in code, with state in Azure Blob Storage, locked during changes and versioned for recovery. Nothing is created by hand, so the environment can be read from the repository and rebuilt from it. A separate bootstrap root creates the state backend itself, since it cannot store its own first state.
+## Limits that matter
 
-**Docker and Compose:** both images are built locally and verified before they reach Azure. In the local composition the API publishes no ports and is reachable only from the web container, so the local layout mirrors the internal ingress boundary rather than approximating it.
+- **Network scope:** API ingress is environment-scoped; there is no custom VNet integration.
+  Other apps in that environment can reach the ingress and need the key for protected routes.
+- **Service authentication:** public clients can use the proxy without a user login. The key
+  authenticates the service call; `/health` is exempt from the check. The key exists in Terraform state.
+- **Release discipline:** the pipeline avoids overwriting published tags; the registry does not
+  lock them. Checkov and Trivy report without severity-based blocking. See
+  [tags](docs/decisions.md#image-tags) and [scan enforcement](docs/decisions.md#security-scanning-enforcement).
+- **Evidence scope:** post-migration health does not demonstrate cross-repository denial. Load
+  results describe one run. Sentinel detection rules were not implemented.
 
-## Validation
+## Find your way around
 
-The deployment has been validated through:
+| To understand | Start here |
+| --- | --- |
+| Components, boundaries, and request flow | [Architecture](docs/architecture.md) |
+| Build order and the evidence for each phase | [Documentation index](docs/README.md) |
+| Why the design uses these controls | [Decisions](docs/decisions.md) |
+| Failures, diagnoses, and fixes | [Troubleshooting](docs/troubleshooting.md) |
+| Infrastructure and permission ownership | [Platform root](terraform/main.tf), [bootstrap root](terraform/bootstrap/state-backend/) |
+| Delivery, plans, and scanning | [Workflows](.github/workflows/) |
+| Local web-to-API composition | [Compose file](compose.yaml) |
 
-- Public HTTPS and health requests
-- Container revision health
-- Scale from zero to one replica
-- Private image retrieval
-- Application and platform logs
-- Log Analytics request correlation
-- Negative-path testing
-- Response header and version disclosure checks
-- Client address truncation in local and Azure logs
-- The API's own hostname returning `404` from outside the environment
-- Terraform drift checks
-
-Validation evidence, implementation phases, decisions, and troubleshooting records are available under [`docs/`](docs/README.md). Step-by-step records with screenshot evidence are in the [worklog](docs/worklog/).
-
-## Repository structure
-
-```text
-container-app-in-azure/
-|-- .github/
-|   `-- workflows/
-|-- app/
-|   |-- api/
-|   `-- web/
-|-- docs/
-|   |-- images/
-|   |-- phases/
-|   |-- validation-testing/
-|   |-- worklog/
-|   |-- architecture.md
-|   |-- decisions.md
-|   `-- troubleshooting.md
-|-- terraform/
-|   |-- bootstrap/
-|   `-- modules/
-|-- compose.yaml
-`-- README.md
-```
-
-`.github/workflows/` holds the plan, security, and deploy pipelines. `terraform/bootstrap/` is the root a human applies, holding the state backend and everything that grants access.
-
-`compose.yaml` runs both containers locally, with the API publishing no ports so the local layout mirrors internal ingress.
-
-Terraform state and saved plan files are not committed to Git.
-
-## Project status
-
-The lab is completed. Every deployed component in the diagram above is built, validated, and documented, and the platform runs unattended through the pipeline.
-
-**Note: The container app and website is no longer in use**
+Compose publishes only the web port and uses HTTP for the local upstream. It exercises the proxy
+and key checks, while Azure ingress, TLS, and registry identity are covered by their own records.
