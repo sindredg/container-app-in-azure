@@ -2,7 +2,9 @@
 
 How the platform is put together, what talks to what, and which boundary stops what.
 
-Everything described here is deployed. Anything not deployed is listed under [What is deliberately absent](#what-is-deliberately-absent).
+This describes the completed lab, whose environment has been torn down. The retained code and
+evidence record its behavior; [What is deliberately absent](#what-is-deliberately-absent) marks
+features outside that implementation.
 
 ## Components
 
@@ -72,13 +74,18 @@ The proxy happens inside the web container rather than in the browser. Three con
 
 1. Every request the browser makes goes to its own origin, so no CORS configuration exists anywhere in the system.
 2. The API hostname is never exposed to client code.
-3. The API can refuse anything that does not carry the shared secret, because only the proxy is meant to call it.
+3. Protected API routes require the shared secret supplied by Nginx. `/health` is exempt.
+   This authenticates a service call, not a browser user: public clients can use the proxy route.
 
 ## Boundaries
 
 Three separate controls, each doing a different job.
 
-**Network.** The API sets `external_enabled = false`. Its hostname resolves publicly, but the environment refuses to route to it from outside. The web app is the only path in.
+**Network.** The API sets `external_enabled = false`. Its hostname resolves publicly, but managed
+ingress returns `404` for requests from outside the environment before they reach the FastAPI
+container. The public route to the API in this deployment is the Nginx proxy. Internal ingress
+alone does not restrict callers to that app; other apps in the
+environment can reach the API endpoint.
 
 **Authentication between the apps.** Terraform generates a 48 character shared secret with `random_password`, stores it as a Container App secret on both apps, and never writes it to Git. Nginx sends it as `X-Api-Key` on every proxied request. The API requires it on every route except `/health`, which the platform probes call directly.
 
@@ -98,9 +105,12 @@ Three separate controls, each doing a different job.
 )
 ```
 
-The condition is the entire mechanism. The same role assigned without one is registry wide. The shape matters too: it allows anything that is not a repository read, then constrains repository reads by name, so it does not deny actions it was never meant to describe.
+This is Azure RBAC with ABAC conditions. The Reader role grants repository-read operations;
+the ABAC condition narrows content and metadata reads using the repository-name attribute.
+Without the condition, the role is registry-wide. The condition does not grant additional
+operations beyond those permitted by the role.
 
-The registry has `admin_enabled = false`, so no username and password pair exists to leak.
+The registry sets `admin_enabled = false`; app image pulls use managed identities.
 
 ## Scaling and revisions
 
@@ -116,7 +126,9 @@ revision_suffix = "${replace(var.image_tag, ".", "-")}-${local.config_hash}"
 
 The suffix combines the version with a six character hash of the values that should force a new revision: image tag, max replicas, concurrent requests, and upstream FQDN. The tag alone repeats when only configuration changes, which would leave a revision serving stale settings under a name implying otherwise.
 
-`max_inactive_revisions = 5` keeps previous revisions alive, because a rollback needs something to roll back to. Rollback is a traffic weight change rather than a redeploy, so it takes effect without a build.
+`max_inactive_revisions = 5` retains inactive revision configuration; it does not keep replicas
+running. Traffic weights select active revisions in multiple-revision mode. A retained inactive
+revision must be activated before it can receive traffic; no image rebuild is needed.
 
 Both containers carry startup, readiness, and liveness probes on `/health`, all on port 8080.
 
@@ -131,11 +143,18 @@ Two Terraform roots with different trust levels.
 
 The pipeline identity holds Contributor, which deliberately excludes managing role assignments. So anything that grants access lives in the root a human applies, and the pipeline only reads those identities through a data source.
 
-This is not about limiting damage. The pipeline can already delete the registry and both apps. Destruction is loud and rebuilt from code in minutes, while a quietly granted permission persists and nobody notices.
+Contributor still permits deletion of the registry and both apps. The separation restricts
+role-assignment changes; it does not prevent destructive infrastructure changes.
 
-Authentication to Azure uses OIDC federated credentials, so no secret is stored in GitHub. The subjects must match byte for byte, and the deploy credential includes an environment claim in place of the ref claim, which is what makes the deployment wait for approval.
+Authentication to Azure uses OIDC federated credentials rather than a stored client secret.
+The deploy job targets the GitHub `dev` environment, whose protection rules gate approval. Its
+federated credential trusts the environment-specific subject; that subject is an identity claim,
+not the approval mechanism itself.
 
-On every pull request: format, validate, lint, security scan, image scan, and a plan posted as a comment. On merge: build, apply, and a smoke test that proves the deployment serves traffic before the run is called green.
+Pull requests run lint and security/image scans. Terraform changes also trigger format, validate,
+and an authenticated plan posted as a comment. Merges matching the deploy workflow's path filters
+trigger image publication, apply, and a smoke test after environment approval. Documentation-only
+changes do not trigger deployment.
 
 Both workflows share a `terraform-state` concurrency group, so plans and applies queue rather than collide on the state lease.
 
@@ -143,11 +162,19 @@ Both workflows share a `terraform-state` concurrency group, so plans and applies
 
 The environment sends platform logs to Log Analytics, and both apps send application logs there. Retention is 30 days.
 
-Request logging happens at the network level rather than in application code. Azure truncates client addresses in the logs it emits, which is a privacy property of the platform rather than something the applications implement.
+Nginx implements the IPv4 truncation in its custom access-log format, using the forwarded client
+address to retain a `/24` prefix. Its proxy clears `X-Forwarded-For` on API calls. FastAPI's
+request middleware logs path, status, and duration without addresses; Uvicorn access logging is
+disabled. These application choices reduce identifying detail; they do not make all platform
+logs anonymous.
 
 ## What is deliberately absent
 
-**Private networking.** VNet integration cannot be added to an existing Container Apps environment, so it means rebuilding the environment and moving both apps. It also bills continuously and ends the scale to zero behaviour the platform relies on. Evaluated and deferred on cost and effort, not judged unnecessary.
+**Custom VNet integration.** No customer VNet is configured in this lab. Internal ingress is
+scoped to the Container Apps environment; it does not establish a customer-managed subnet
+boundary. VNet integration and scale-to-zero are separate design choices: integration does not
+itself disable application scale-to-zero. The registry and state account use authenticated
+public endpoints, not Private Link.
 
 **A database.** Neither application holds state, so none is deployed.
 

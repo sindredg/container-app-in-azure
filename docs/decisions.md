@@ -102,13 +102,15 @@ Alternatives: the [registry admin account](https://learn.microsoft.com/en-us/azu
 
 ## Image tags
 
-Decision: [immutable version tags](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-image-tag-version). Each release is published once and never overwritten.
+Decision: [versioned release tags](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-image-tag-version), with the deployment workflow publishing each tag once.
 
-Why: a deployment names an exact artifact, and rollback means redeploying the previous tag.
+Why: configuration identifies the release, and a previous image can be selected without rebuilding.
 
-Alternatives: a moving `latest` tag, which removes a step from every release, makes the running image unidentifiable from the configuration, and lets two deployments of identical config produce different results.
+Alternatives: a moving `latest` tag, which lets identical deployment configuration select different image content over time.
 
-Notes: immutability is enforced by the pipeline skipping any tag already in the registry, not by a registry policy. The [Basic tier](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus) has none.
+Notes: the pipeline skips existing tags and rejects changed app source when its tag is already
+published. No repository or tag write locks are configured. This workflow discipline does not
+prevent another authorized registry writer from moving a tag; images are not pinned by digest.
 
 ## Release version enforcement
 
