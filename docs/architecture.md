@@ -81,9 +81,10 @@ The proxy happens inside the web container rather than in the browser. Three con
 
 Three separate controls, each doing a different job.
 
-**Network.** The API sets `external_enabled = false`. Its hostname resolves publicly, but ingress
-refuses requests from outside the environment. The public route to the API in this deployment is
-the Nginx proxy. Internal ingress alone does not restrict callers to that app; other apps in the
+**Network.** The API sets `external_enabled = false`. Its hostname resolves publicly, but managed
+ingress returns `404` for requests from outside the environment before they reach the FastAPI
+container. The public route to the API in this deployment is the Nginx proxy. Internal ingress
+alone does not restrict callers to that app; other apps in the
 environment can reach the API endpoint.
 
 **Authentication between the apps.** Terraform generates a 48 character shared secret with `random_password`, stores it as a Container App secret on both apps, and never writes it to Git. Nginx sends it as `X-Api-Key` on every proxied request. The API requires it on every route except `/health`, which the platform probes call directly.
@@ -104,9 +105,12 @@ environment can reach the API endpoint.
 )
 ```
 
-The condition is the entire mechanism. The same role assigned without one is registry wide. The shape matters too: it allows anything that is not a repository read, then constrains repository reads by name, so it does not deny actions it was never meant to describe.
+This is Azure RBAC with ABAC conditions. The Reader role grants repository-read operations;
+the ABAC condition narrows content and metadata reads using the repository-name attribute.
+Without the condition, the role is registry-wide. The condition does not grant additional
+operations beyond those permitted by the role.
 
-The registry has `admin_enabled = false`, so no username and password pair exists to leak.
+The registry sets `admin_enabled = false`; app image pulls use managed identities.
 
 ## Scaling and revisions
 

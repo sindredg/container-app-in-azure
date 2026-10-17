@@ -9,13 +9,15 @@ using federated Azure authentication.
 
 ## How it fits together
 
-![Container Apps overview: public HTTPS reaches Nginx, which proxies over verified HTTPS to internal API ingress with X-Api-Key. Containers listen on HTTP port 8080. Separate identities authorize image pulls; GitHub Actions runs Terraform with Blob Storage state, and logs flow to Log Analytics.](docs/diagrams/platform-overview.svg)
+![Container Apps overview: public HTTPS reaches Nginx, which proxies over verified HTTPS to internal API ingress with X-Api-Key. Direct browser calls to the API hostname stop at ingress with 404 before FastAPI. Containers listen on HTTP port 8080. Separate identities and conditional Reader roles authorize image pulls; GitHub Actions runs Terraform with Blob Storage state, and logs flow to Log Analytics.](docs/diagrams/platform-overview.svg)
 
 - **Request path:** the browser uses the web origin for both the page and `/api/status`.
   Nginx adds `X-Api-Key` and verifies the API endpoint's TLS certificate. Managed ingress
-  terminates HTTPS; containers listen on HTTP port 8080.
-- **Image access:** separate managed identities and ABAC conditions limit each app to its
-  `web` or `api` repository. The registry admin account is disabled; its endpoint is public.
+  terminates HTTPS; containers listen on HTTP port 8080. A direct browser call to the API hostname
+  is rejected by ingress with `404` before reaching FastAPI.
+- **Image access:** each app uses a managed identity and a registry Reader role. Azure ABAC
+  conditions check the repository name, limiting reads to `web` or `api`. The registry admin
+  account is disabled; its endpoint is public.
 - **Delivery and state:** Terraform changes receive a PR plan. Relevant merges queue deployment
   for approval, followed by image publication, apply, and smoke tests. Azure sign-in uses OIDC.
   Human-applied bootstrap owns permission grants; workload CI runs the platform root. Blob leases lock state.
