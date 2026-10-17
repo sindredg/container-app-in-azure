@@ -1,5 +1,9 @@
 # Log Analytics and Route Validation
 
+> **Historical baseline, before Phase 8.** This record preserves the initial routing finding.
+> [Phase 8](../worklog/phase-08-web-routing-and-log-privacy.md#azure-verification) records the
+> later routing update and an observed Azure `404`; the original five-path Azure retest remained open.
+
 ## Goal
 
 Validate the public Container App through generated traffic, Azure logs, scale events, and negative-path requests.
@@ -30,13 +34,14 @@ Requests to `/admin`, `/login`, `/.env`, `/.git/config`, and `/server-status` re
 
 ![Log Analytics captures the negative-path requests](../images/validation-negative-path-logs.png)
 
-No sensitive file exposure was demonstrated. Nginx served the normal `index.html` fallback because the configuration uses:
+No sensitive file exposure was demonstrated. Nginx served the normal `index.html` fallback because the configuration at that stage used:
 
 ```nginx
 try_files $uri $uri/ /index.html;
 ```
 
-This is useful for a client-routed single-page application. The current site is static, so a real `404` response is more accurate. The routing behavior will be corrected or explicitly accepted before response-code monitoring is added.
+This is useful for a client-routed single-page application. The site was static, so a real `404` response was more accurate. This finding prompted the
+routing correction in Phase 8; it does not describe the final Nginx configuration.
 
 ## Outcome
 

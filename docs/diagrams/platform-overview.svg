@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="810" viewBox="0 0 1200 810" role="img" aria-labelledby="title description">
+  <title id="title">Azure Container Apps: public web and internal API</title>
+  <desc id="description">Browser HTTPS reaches public web ingress, which forwards HTTP on port 8080 to Nginx. Nginx proxies API requests over verified HTTPS with X-Api-Key to internal API ingress, which forwards HTTP on port 8080 to FastAPI. Direct requests from outside the environment to the API hostname receive an Azure ingress 404. Each app pulls registry images with its own repository-scoped managed identity. GitHub Actions signs in to Azure using OIDC, publishes images, and runs Terraform after approval. Terraform manages the platform with Blob Storage state and lease locking. Application console and platform logs go to Log Analytics. No custom VNet or Private Link is configured.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1"><stop stop-color="#0b1426"/><stop offset="1" stop-color="#102338"/></linearGradient>
+    <marker id="request-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#65dfbd"/></marker>
+    <marker id="control-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#e9c684"/></marker>
+    <marker id="log-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8fbfff"/></marker>
+    <marker id="blocked-end" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="8" markerHeight="8" orient="auto"><path d="M 2 2 L 10 10 M 2 10 L 10 2" fill="none" stroke="#f196a5" stroke-width="2"/></marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #eaf2ff; }
+      .heading { font-size: 27px; font-weight: 700; }
+      .label { font-size: 18px; font-weight: 700; }
+      .detail { font-size: 15px; fill: #b5c8df; }
+      .small { font-size: 14px; fill: #b5c8df; }
+      .panel { fill: #101e32; stroke: #30445f; stroke-width: 1.5; }
+      .node { fill: #193149; stroke: #466888; stroke-width: 1.5; }
+      .request { fill: none; stroke: #65dfbd; stroke-width: 2.5; marker-end: url(#request-arrow); }
+      .control { fill: none; stroke: #e9c684; stroke-width: 2; marker-end: url(#control-arrow); }
+      .log { fill: none; stroke: #8fbfff; stroke-width: 2; marker-end: url(#log-arrow); }
+      .blocked { fill: none; stroke: #f196a5; stroke-width: 2; stroke-dasharray: 6 5; marker-end: url(#blocked-end); }
+    </style>
+  </defs>
+  <rect width="1200" height="810" rx="18" fill="url(#background)"/>
+  <text x="32" y="47" class="heading" >Public web, internal API</text>
+  <text x="32" y="77" class="detail" >Same-origin routing · authenticated image pulls · Terraform delivery</text>
+  <rect x="238" y="100" width="948" height="290" rx="12" class="panel"/>
+  <text x="260" y="130" class="label" >Container Apps environment · shared runtime and ingress</text>
+  <path d="M 204 210 H 260" class="request"/>
+  <path d="M 410 210 H 458" class="request"/>
+  <path d="M 668 210 H 732" class="request"/>
+  <path d="M 912 210 H 960" class="request"/>
+  <path d="M 114 244 V 328 H 822 V 244" class="blocked"/>
+  <path d="M 200 465 V 420 H 560 V 390" class="request"/>
+  <path d="M 990 390 V 465" class="log"/>
+  <path d="M 180 625 V 561" class="control"/>
+  <path d="M 320 673 H 460" class="control"/>
+  <path d="M 740 673 H 852" class="control"/>
+  <path d="M 600 625 V 600 H 768 V 390" class="control"/>
+  <path d="M 768 513 H 360" class="control"/>
+  <path d="M 768 513 H 832" class="control"/>
+  <rect x="24" y="160" width="180" height="84" rx="12" class="node"/>
+  <text x="40" y="188" class="label" >Browser</text>
+  <text x="40" y="212" class="detail" >Page + /api/status</text>
+  <rect x="260" y="160" width="150" height="84" rx="12" class="node"/>
+  <text x="276" y="188" class="label" >Web ingress</text>
+  <text x="276" y="212" class="detail" >Public HTTPS</text>
+  <rect x="458" y="160" width="210" height="84" rx="12" class="node"/>
+  <text x="474" y="188" class="label" >Nginx web</text>
+  <text x="474" y="212" class="detail" >Static site + proxy</text>
+  <rect x="732" y="160" width="180" height="84" rx="12" class="node"/>
+  <text x="748" y="188" class="label" >API ingress</text>
+  <text x="748" y="212" class="detail" >Internal HTTPS</text>
+  <rect x="960" y="160" width="210" height="84" rx="12" class="node"/>
+  <text x="976" y="188" class="label" >FastAPI</text>
+  <text x="976" y="212" class="detail" >Key check · /status</text>
+  <rect x="40" y="465" width="320" height="96" rx="12" class="node"/>
+  <text x="56" y="493" class="label" >Azure Container Registry</text>
+  <text x="56" y="517" class="detail" >web / api image repositories</text>
+  <text x="56" y="541" class="small" >Per-app pull identities + ABAC</text>
+  <rect x="832" y="465" width="340" height="96" rx="12" class="node"/>
+  <text x="848" y="493" class="label" >Log Analytics</text>
+  <text x="848" y="517" class="detail" >App console + platform logs</text>
+  <text x="848" y="541" class="small" >30-day retention</text>
+  <rect x="40" y="625" width="280" height="96" rx="12" class="node"/>
+  <text x="56" y="653" class="label" >GitHub Actions</text>
+  <text x="56" y="677" class="detail" >Azure sign-in via OIDC</text>
+  <text x="56" y="701" class="small" >dev approval · build · smoke test</text>
+  <rect x="460" y="625" width="280" height="96" rx="12" class="node"/>
+  <text x="476" y="653" class="label" >Platform Terraform</text>
+  <text x="476" y="677" class="detail" >Environment · apps · registry</text>
+  <text x="476" y="701" class="small" >Permission grants: bootstrap root</text>
+  <rect x="852" y="625" width="320" height="96" rx="12" class="node"/>
+  <text x="868" y="653" class="label" >Azure Blob Storage</text>
+  <text x="868" y="677" class="detail" >Terraform state + lease lock</text>
+  <text x="868" y="701" class="small" >Versioning · private blob container</text>
+  <text x="232" y="151" class="small" text-anchor="middle">HTTPS</text>
+  <text x="434" y="151" class="small" text-anchor="middle">HTTP :8080</text>
+  <text x="700" y="151" class="small" text-anchor="middle">HTTPS + X-Api-Key</text>
+  <text x="936" y="151" class="small" text-anchor="middle">HTTP :8080</text>
+  <text x="132" y="282" class="small" >Direct API</text>
+  <text x="132" y="304" class="small" >attempt</text>
+  <text x="450" y="352" class="small" text-anchor="middle">Outside environment → API hostname: 404 at Azure ingress</text>
+  <text x="390" y="408" class="small" text-anchor="middle">Images · per-app identities</text>
+  <text x="1006" y="437" class="small" >App + platform logs</text>
+  <text x="196" y="600" class="small" >Build / push</text>
+  <text x="390" y="655" class="small" text-anchor="middle">Plan / apply</text>
+  <text x="796" y="655" class="small" text-anchor="middle">State + lease</text>
+  <text x="784" y="422" class="small" >Manages</text>
+  <path d="M 32 758 H 72" class="request"/>
+  <text x="84" y="763" class="small" >Requests / images</text>
+  <path d="M 285 758 H 325" class="control"/>
+  <text x="337" y="763" class="small" >Delivery / state</text>
+  <path d="M 525 758 H 565" class="log"/>
+  <text x="577" y="763" class="small" >Logs</text>
+  <path d="M 675 758 H 715" class="blocked"/>
+  <text x="727" y="763" class="small" >Rejected request</text>
+  <text x="32" y="795" class="small" >Selected paths. Ingress terminates TLS; app containers listen on HTTP port 8080.</text>
+</svg>
